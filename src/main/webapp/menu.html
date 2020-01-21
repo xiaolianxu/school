@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="icon/iconfont.css" type="text/css">
+    <script src="icon/iconfont.js"></script>
+</head>
+<style type="text/css">
+    html,body,#Sidebar{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #444c5f;
+        color:#EEEEEE;
+    }
+    .title{
+        height:45px;
+        width:100%;
+        text-align: center;
+        font-size:14px;
+        line-height:45px;
+        background-color: #3c4155;
+        cursor:default;
+    }
+    .SidebarItem{
+        font-size: 12px;
+        width:100%;
+        height:35px;
+        line-height:35px;
+        text-align: center;
+        cursor:pointer;
+    }
+    .SidebarItem.active{
+        background-color: #5292ec;
+    }
+    .SidebarItem:hover{
+        color: #FFF;
+    }
+    .icon-mulu{
+        position: absolute;
+        left: 10px;
+    }
+    .rog{
+        position: absolute;
+        right: 10px;
+    }
+    .iconfont{
+        font-size: 14px;
+    }
+</style>
+<body>
+<div id="Sidebar">
+    <template v-for="(items,indexs) in menus">
+        <div class="title" @click="fn(indexs)">
+         <span class="iconfont icon-mulu"></span>{{items.name}}<span class="iconfont rog" :class="(indexs==isActive)?'icon-arrfill_u-copy-copy':'icon-arrfill_l'"></span>
+        </div>
+        <div class="itemContain" v-show="indexs==isActive">
+            <template v-for="(item,index) in items.child">
+               <div @click="fs(indexs,index)" class="SidebarItem" :class="(choose[0]==indexs&&choose[1]==index)?'active':''">{{item.name}}</div>
+            </template>
+        </div>
+    </template>
+</div>
+</body>
+<script src="js/outside/vue.js"></script>
+<script src="js/outside/jquery.min.js"></script>
+<script>
+    var menu = new Vue({
+        el:"#Sidebar",
+        name: "Sidebar",
+        data: function(){
+            return{
+                AllMenus:[
+                    [{name:"信息图表分析", child:[{name:"学生基本信息",url:"ui/aca/analysis.html"},{name:"学分信息统计",url:"ui/aca/creditSta.html"}]},
+                        {name:"数据查询",child:[{name:"课程信息",url:"ui/aca/courseInfo.html"},{name:"学生信息",url:"ui/aca/studentInfo.html"},{name:"班级信息",url:"ui/aca/classInfo.html"},{name:"成绩信息",url:"ui/aca/scoreInfo.html"}]},
+                        {name:"数据录入",child:[{name:"用户录入",url:"ui/aca/userEnt.html"},{name:"课程录入",url:"ui/aca/courseEnt.html"},{name:"班级录入",url:"ui/aca/classEnt.html"}]},
+                        {name:"信息录入",child:[{name:"学分替代",url:"ui/aca/creditSub.html"},{name:"奖励录入",url:"ui/aca/rewEnt.html"},{name:"惩罚录入",url:"ui/aca/punEnt.html"}]},
+                        {name:"记录查询",child:[{name:"替代记录",url:"ui/aca/altRecord.html"},{name:"奖励记录",url:"ui/aca/rewRecord.html"},{name:"惩罚记录",url:"ui/aca/punRecord.html"}]},
+                        {name:"课程信息打印审核",child:[{name:"未审核列表",url:"ui/aca/review.html"},{name:"已审核列表",url:"ui/aca/reviewed.html"}]},
+                        {name:"个人信息",child:[{name:"个人信息",url:"ui/teacher/personalInfo.html"}]}],
+                    [{name:"信息录入",child:[{name:"成绩录入",url:"ui/teacher/scoreEnt.html"}]},
+                        {name:"信息图表分析",child:[{name:"学生成绩分析",url:"ui/teacher/gradeAna.html"}]},
+                        {name:"信息表格展示",child:[{name:"课程信息",url:"ui/teacher/courseInfo.html"},{name:"成绩信息",url:"ui/teacher/resultInq.html"}]},
+                        {name:"个人信息",child:[{name:"个人信息",url:"ui/teacher/personalInfo.html"}]}],
+                    [{name:"数据查询",child:[{name:"班级信息",url:"ui/counselor/classInfo.html"},{name:"学生信息",url:"ui/counselor/studentInfo.html"},{name:"成绩信息",url:"ui/counselor/scoreInfo.html"}]},
+                        {name:"信息图表分析", child:[{name:"学生基本信息",url:"ui/aca/analysis.html"},{name:"学分信息统计",url:"ui/counselor/creditSta.html"},{name:"成绩信息统计",url:"ui/counselor/scoreAni.html"}]},
+                        {name:"个人信息",child:[{name:"个人信息",url:"ui/teacher/personalInfo.html"}]}],
+                    [{name:"课程信息打印申请",child:[{name:"课程信息打印申请",url:"ui/student/application.html"},{name:"申请列表",url:"ui/student/appList.html"}]},
+                        {name:"信息查询",child:[{name:"成绩查询",url:"ui/student/resultInq.html"},{name:"学分统计",url:"ui/student/creditSta.html"},{name:"成绩分析",url:"ui/student/scoreAni.html"}]},
+                        {name:"个人信息",child:[{name:"个人信息",url:"ui/student/personalInfo.html"}]}]],
+                menus:[],
+                isActive:-1,
+                choose:[]
+            }
+        },
+        mounted:function(){
+            this.init();
+        },
+        methods: {
+            init:function(){
+                var that = this;
+                $.post('user/getRole.do',{},function(da) {
+                    that.menus = that.AllMenus[parseInt(da)-1];
+                    setTimeout(function () {
+                        that.fn(0);
+                        that.fs(0,0);
+                    },50);
+                });
+            },
+            fn:function (index) {
+                if(this.isActive==index) {
+                    $(".itemContain:eq("+ this.isActive + ")").slideUp("slow");
+                    this.isActive = -1;
+                }else{
+                    $(".itemContain:eq("+ this.isActive + ")").slideUp("slow");
+                    $(".itemContain:eq("+ index + ")").slideDown("slow");
+                    this.isActive = index;
+                }
+            },
+            fs:function (indexs,index) {
+                this.choose = [indexs,index];
+                var url = this.menus[indexs].child[index].url;
+                window.parent.document.getElementById("view").src = url;
+                var name = this.menus[indexs].child[index].name;
+                window.parent.document.getElementsByClassName("name")[0].innerHTML = name;
+            }
+        }
+
+    })
+</script>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/all.css">
+</head>
+
+<style type="text/css">
+    #courseInfo{
+        height: 100%;
+        width: calc(100% - 50px);
+        margin: 0;
+        padding: 0;
+    }
+    select{
+        width: 150px;
+    }
+    .xz > select{
+        width: 70px;
+    }
+</style>
+<body>
+<div id="courseInfo">
+    <div class="search">
+        <div class="xy">开课学院:
+            <select id="xy">
+                <option value="-1">全部</option>
+                <template v-for="col in college">
+                    <option :value="col.name">{{col.name}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="xn">学年:
+            <select id="xn">
+                <option value="-1">全部</option>
+                <template v-for="item in schoolYear">
+                    <option :value="item" >{{item}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="xq">学期:
+            <select id="xq">
+                <option value="-1">全部</option>
+                <template>
+                    <option :value="1" >1</option>
+                    <option :value="2" >2</option>
+                </template>
+            </select>
+        </div>
+        <div class="xz">课程性质:
+            <select id="xz">
+                <option value="-1">全部</option>
+                <template v-for="item in kkxz">
+                    <option :value="item.name" >{{item.name}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="button inq">查询</div>
+    </div>
+    <div class="search">
+        <div class="choose">
+            <select id="type">
+                <option value="code">课程代码</option>
+                <option value="name">课程名称</option>
+            </select>
+            <input type="text" value="" id="spiVal">
+        </div>
+        <div class="button inq1">准确查询</div>
+    </div>
+    <div class="demoContain">
+        <table class="layui-table">
+            <thead>
+            <tr>
+                <th>学年</th>
+                <th>学期</th>
+                <th>课程代码</th>
+                <th>课程名称</th>
+                <th>课程性质</th>
+                <th>学分</th>
+                <th>开课学院</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div id="page"></div>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var courseInfo = new Vue({
+        el: "#courseInfo",
+        name: "courseInfo",
+        data: function () {
+            return {
+                kkxz:[],
+                college:[],
+                schoolYear:[]
+            }
+        },
+        mounted: function () {
+            this.getList();
+            this.layInit();
+        },
+        methods: {
+            layInit:function(){
+                var that = this;
+                layui.use(['layer','laypage'], function(){
+                    laypage = layui.laypage;
+                    //搜索框点击事件
+                    $('.inq').on('click', function(){
+                        that.initUserList();
+                        layer.msg("查询成功!");
+                        return false;
+                    });
+                    $('.inq1').on('click', function(){
+                        that.initUserList1();
+                        layer.msg("查询成功!");
+                        return false;
+                    });
+                    //初始化表格数据
+                    that.initUserList();
+                    $(document).on('click','.vi',function () {
+                        var code=$(this).attr("code");
+                        layer.open({
+                            type: 2,
+                            title:"课程具体信息",
+                            area: ['879px', '400px'],
+                            content: ['classification.html?'+ code, 'no']
+                        });
+                    });
+                });
+            },
+           initUserList:function(pn,pageSize){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../course/getCourseList.do",
+                    data:{college:$("#xy").val(),schoolYear:$("#xn").val(),semester:$("#xq").val(),courseType:$("#xz").val(),pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append(item.school_year);
+                                var td2=$("<td></td>").append(item.semester);
+                                var td3=$("<td></td>").append(item.course_code);
+                                var td4=$("<td></td>").append(item.course_name);
+                                var td5=$("<td></td>").append(item.course_nature);
+                                var td6=$("<td></td>").append(item.credit);
+                                var td7=$("<td></td>").append(item.college);
+                                var td8=$("<td></td>").addClass("td-manage");
+                                td8.append($("<button></button>").addClass("layui-btn  layui-btn-sm layui-btn-normal vi").attr("code",item.course_code).append("查看"));
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td4).append(td5).append(td6).append(td7).append(td8));
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            var curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=curr_page){
+                                            that.initUserList(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            },
+            initUserList1:function(pn,pageSize){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../course/getCourseSp.do",
+                    data:{type:$("#type").val(),spiVal:$("#spiVal").val(),pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append(item.school_year);
+                                var td2=$("<td></td>").append(item.semester);
+                                var td3=$("<td></td>").append(item.course_code);
+                                var td4=$("<td></td>").append(item.course_name);
+                                var td5=$("<td></td>").append(item.course_nature);
+                                var td6=$("<td></td>").append(item.credit);
+                                var td7=$("<td></td>").append(item.college);
+                                var td8=$("<td></td>").addClass("td-manage");
+                                td8.append($("<button></button>").addClass("layui-btn  layui-btn-sm layui-btn-normal vi").attr("code",item.course_code).append("查看"));
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td4).append(td5).append(td6).append(td7).append(td8));
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            var curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=curr_page){
+                                            that.initUserList1(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            },
+            getList: function () {
+                var That = this;
+                $.post('../../course/getAll.do', {}, function (da) {
+                    That.college = da.college;
+                    That.kkxz = da.courseType;
+                });
+                var y = new Date().getFullYear();
+                for (var i = y; i > 1910; i--) {
+                    this.schoolYear.push((i-1)+"-"+i);
+                }
+            }
+        }
+    });
+</script>
+</html>

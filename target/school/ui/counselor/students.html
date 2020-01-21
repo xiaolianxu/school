@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .courseBy{
+        text-align: center;
+        padding: 0px 5px 0px 5px;
+    }
+    .layui-border-box{
+        border: none;
+    }
+    .t{
+        text-align: left;
+        padding: 10px 10px 0px 10px;
+    }
+</style>
+<body>
+<div class="courseBy">
+    <div class="t">请选择一个学生进行查看：</div>
+    <table class="layui-hide" id="demo" lay-filter="demo"></table>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    function layInit(){
+        var that = this;
+        var parent_json = parent.req_data;
+        var json = [];
+        for(var i=0;i<parent_json.length;i++){
+            json.push(parent_json[i]);
+        }
+        layui.use('table', function(){
+            var table = layui.table;
+            table.render({
+                elem: '#demo',
+                width: 917,
+                height:410,
+                cols: [[
+                    {type:'radio'},
+                    {field: 'userId', title: '学号', width: 120,align:"center"},
+                    {field: 'username', title: '姓名', width: 120,align:"center"},
+                    {field: 'profession', title: '专业', width:200,align:"center"},
+                    {field: 'admClass', title: '班级', width:120,align:"center"},
+                    {field: 'grade',title:'年级',width:100,align:"center"}
+                ]],
+                data:json,
+                page: false,
+                limit:parent_json.length
+            });
+        });
+    }
+    layInit();
+    function pushA() {
+        var id = {};
+        layui.use('table', function() {
+            var table = layui.table;
+            var checkStatus = table.checkStatus('demo').data;
+            if(checkStatus.length>0){
+                id = {userId:checkStatus[0].userId,username:checkStatus[0].username,admClass:checkStatus[0].admClass};
+            }
+        });
+        return id;
+    }
+
+</script>
+</html>

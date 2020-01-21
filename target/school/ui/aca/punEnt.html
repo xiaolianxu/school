@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        position: relative;
+    }
+    .punEnt{
+        position: absolute;
+        top: calc(50% - 230px);
+        left: calc(50% - 275px);
+        height: 430px;
+        width: 550px;
+        padding-top: 30px;
+        border: 1px solid #CCC;
+        border-radius: 0.4rem;
+        box-shadow: 0 0 0.1rem #c2c2c2;
+    }
+    .layui-form{
+        width: 500px;
+    }
+</style>
+<body>
+<div class="punEnt">
+    <form class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">学生id</label>
+            <div class="layui-input-inline">
+                <input type="text" name="id" required  lay-verify="required" placeholder="id" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">学生姓名</label>
+            <div class="layui-input-inline">
+                <input type="text" name="name" required  lay-verify="required" placeholder="姓名" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">惩罚等级</label>
+            <div class="layui-input-block">
+                <input type="radio" name="level" value="警告" title="警告" checked>
+                <input type="radio" name="level" value="严重警告" title="严重警告">
+                <input type="radio" name="level" value="记过" title="记过">
+                <input type="radio" name="level" value="记大过" title="记大过">
+                <input type="radio" name="level" value="留校察看" title="留校察看">
+                <input type="radio" name="level" value="开除学籍" title="开除学籍">
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">具体原因</label>
+            <div class="layui-input-block">
+                <textarea name="desc" required lay-verify="required" placeholder="请输入内容" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+            </div>
+        </div>
+    </form>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var punEnt = new Vue({
+        el: ".punEnt",
+        name: "punEnt",
+        data: function () {
+            return {
+
+            }
+        },
+        mounted: function () {
+            this.init();
+        },
+        methods: {
+            init:function () {
+                var that = this;
+                layui.use(['form','layer'], function(){
+                    var form = layui.form;
+                    var layer = layui.layer;
+                    form.on('submit(formDemo)', function(data){
+                        $.ajax({
+                            type: 'POST',
+                            url:"../../student/matchStudent.do",
+                            data:{id:data.field.id,name:data.field.name},
+                            success:function (da) {
+                                if(da==""){
+                                    layer.msg('您输入的学生学号或学生姓名错误，请重新输入！');
+                                }else{
+                                    var sex = (da.sex==0) ?'女':'男';
+                                    var con = '<div style="padding: 50px; line-height: 30px; background-color: #393D49; color: #fff; font-weight: 300;">' +
+                                        '学生id：' + data.field.id + '<br/>' +'学生姓名：' + data.field.name + '<br>' +
+                                        '性别：'+ sex + '<br/>' +'专业：'+ da.profession + '<br/>'+
+                                        '班级：'+ da.admClass + '<br/>' + '年级：' +  da.grade + '<br/>' +
+                                        '惩罚等级：' + data.field.level + '<br/>' +
+                                        '具体原因：' + data.field.desc + '</div>';
+                                    layer.open({
+                                        type: 1,
+                                        title: false,
+                                        closeBtn: false,
+                                        area: '350px;',
+                                        shade: 0.8,
+                                        id: 'LAY_layuipro', //设定一个id，防止重复弹出
+                                        resize: false,
+                                        btn: ['提交', '取消'],
+                                        btnAlign: 'c',
+                                        moveType: 1, //拖拽模式，0或者1
+                                        content: con,
+                                        yes: function(index,layero){
+                                            var params = {sId:data.field.id,level:data.field.level,descr:data.field.desc};
+                                            $.ajax({
+                                                method:"POST",
+                                                url:"../../student/punEnt.do",
+                                                data:params,
+                                                success:function () {
+                                                    layer.msg('提交成功！');
+                                                    layer.close(index);
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                        return false;
+                    });
+                });
+            }
+        }
+    });
+</script>
+</html>

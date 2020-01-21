@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../icon/iconfont.css">
+    <script src="../../icon/iconfont.js"></script>
+</head>
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        top: 0;
+    }
+    .appList{
+        width: calc(100% - 45px);
+        height: 100%;
+        margin: 0px 10px;
+        top: 0;
+    }
+    .filter{
+        width: calc(100% - 20px);
+        padding: 5px 10px;
+        margin-bottom: 10px;
+        height: 60px;
+        border: 1px solid #CCC;
+        border-radius: 0.4rem;
+        box-shadow: 0 0 0.1rem #c2c2c2;
+    }
+    .filter_top{
+        color: #5292ec;
+        height: 30px;
+        line-height: 30px;
+    }
+    .filter_bottom{
+        height: 30px;
+        line-height: 30px;
+    }
+</style>
+<body>
+<div class="appList">
+    <div class="filter">
+        <div class="filter_top"><span class="iconfont icon-saixuan"></span>筛选条件</div>
+        <div class="filter_bottom">处理结果：
+            <div class="layui-input-inline">
+                <select id="type" style="height: 23px">
+                    <option value="-1">全部</option>
+                    <option value="0">未审核</option>
+                    <option value="1">已通过</option>
+                    <option value="2">已拒绝</option>
+                </select>
+            </div>
+            <button type="button" class="layui-btn layui-btn-normal layui-btn-xs" @click="initUserList()">确定</button>
+        </div>
+    </div>
+    <table class="layui-table" lay-filter="demo">
+        <thead>
+        <tr>
+            <th lay-data="{type:'numbers'}">序号</th>
+            <th lay-data="{field:'id'}">id</th>
+            <th lay-data="{field:'time'}">申请时间</th>
+            <th lay-data="{field:'result'}">审核结果</th>
+            <th lay-data="{field:'do'}">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <div id="page"></div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../js/outside/jsPdf.debug.js"></script>
+<script src="../../js/outside/html2canvas.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var application = new Vue({
+        el: ".appList",
+        name: "appList",
+        data: function () {
+            return {
+            }
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            layInit:function(){
+                var that = this;
+                layui.use(['table','layer','laypage'], function() {
+                    laypage = layui.laypage;
+                    that.initUserList();
+                    $(document).on('click', '.vi', function () {
+                        var data = {
+                            id:$(this).attr("id"),
+                            userId:$(this).attr("userId"),
+                            descr:$(this).attr("descr")
+                        };
+                        req_data = data;
+                        layer.open({
+                            type: 2,
+                            title: false,
+                            area: ['810px', '500px'],
+                            content: ['../aca/printInfo.html', 'no'],
+                            btn:['打印','取消'],
+                            yes: function (index, layero) {
+                                var div = $(layero).find("iframe").contents().find(".score");
+                                var div1 =  $(layero).find("iframe").contents().find(".contain");
+                                div.addClass("active");
+                                div1.addClass("active");
+                                html2canvas(div, {
+                                    background: "#fff",
+                                    allowTaint: true,
+                                    taintTest: false,
+                                    onrendered: function (canvas) {
+                                        var pdf = new jsPDF('p', 'mm', 'a4');    //A4纸，纵向
+                                        var ctx = canvas.getContext('2d'),
+                                        a4w = 190, a4h = 277,    //A4大小，210mm x 297mm，四边各保留10mm的边距，显示区域190x277
+                                        imgHeight = Math.floor(a4h * canvas.width / a4w),    //按A4显示比例换算一页图像的像素高度
+                                        renderedHeight = 0;
+                                        while(renderedHeight < canvas.height) {
+                                            var page = document.createElement("canvas");
+                                            page.width = canvas.width;
+                                            page.height = Math.min(imgHeight, canvas.height - renderedHeight);//可能内容不足一页
+                                            //用getImageData剪裁指定区域，并画到前面创建的canvas对象中
+                                            page.getContext('2d').putImageData(ctx.getImageData(0, renderedHeight, canvas.width, Math.min(imgHeight, canvas.height - renderedHeight)), 0, 0);
+                                            pdf.addImage(page.toDataURL('image/jpeg', 1.0), 'JPEG', 10, 10, a4w, Math.min(a4h, a4w * page.height / page.width));    //添加图像到页面，保留10mm边距
+                                            renderedHeight += imgHeight;
+                                            if(renderedHeight < canvas.height)
+                                                pdf.addPage();//如果后面还有内容，添加一个空页
+                                            delete page;
+                                        }
+                                        pdf.save('report_pdf_' + new Date().getTime() + '.pdf');
+                                        div.removeClass("active");
+                                        div1.removeClass("active");
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+            },
+            initUserList:function(pn,pageSize){
+                var table = layui.table;
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../score/getDetails.do",
+                    data:{type:$("#type").val(),pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td0 =  $("<td></td>").append("");
+                                var td1 = $("<td></td>").append(item.id);
+                                var td2 = $("<td></td>").append(item.appliTime);
+                                var td3 = $("<td></td>").append(item.result==0?"未审核":(item.result==1?"已通过":"已拒绝"));
+                                var td4=$("<td></td>").addClass("td-manage");
+                                if(item.result==1) {
+                                    td4.append($("<button></button>").addClass("layui-btn layui-btn-sm layui-btn-normal vi").attr(item).append("打印"));
+                                }
+                                $(".layui-table tbody").append($("<tr></tr>").append(td0).append(td1).append(td2).append(td3).append(td4));
+                            });
+                            table.init('demo', {
+                                limit:10
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            var curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=curr_page){
+                                            that.initUserList(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+        }
+    });
+</script>
+</html>

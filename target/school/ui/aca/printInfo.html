@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    /*.layui-table-view{*/
+    /*    margin: 10px 0 18px 0;*/
+    /*}*/
+    .score{
+        text-align: center;
+        padding: 5px 5px 5px 5px;
+        height: calc(100% - 10px);
+        width: calc(100% - 10px);
+        overflow: hidden;
+    }
+    .score.active{
+        height: auto;
+    }
+    .contain{
+        width: calc(100% + 20px);
+        height: calc(100% - 10px);
+        overflow-y: scroll;
+    }
+    .contain.active{
+        height: auto;
+    }
+    .title{
+        height: 30px;
+        line-height: 30px;
+    }
+    .de{
+        margin-right: 10px;
+    }
+</style>
+<body>
+<div class="score">
+    <div class="contain">
+        <div class="title">大学学生学业成绩单</div>
+        <div class="descr"><span class="de">姓名：{{name}}</span><span class="de">入学时间：{{uTime}}</span><span class="de">毕业时间：{{oTime}}</span><span class="de">专业：{{pro}}</span><span class="de">学制：全日制本科</span></div>
+        <table id="by" lay-filter="by" lay-size="sm">
+        </table>
+        <table id="demo" lay-filter="demo" lay-size="sm">
+        </table>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var score = new Vue({
+        el: ".score",
+        name: "score",
+        data: function () {
+            return {
+                name:"",
+                uTime:"",
+                oTime:"",
+                pro:""
+            }
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            layInit:function(){
+                var parent_json = parent.req_data; //接受父页面传值
+                var that = this;
+                that.id = parseInt(parent_json.id);
+                var uId =  parseInt(parent_json.userId);
+                var descr = parent_json.descr;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../student/getDetail.do",
+                    data:{id:uId},
+                    success:function (data) {
+                        that.name = data.username;
+                        that.uTime = data.admission;
+                        that.oTime = parseInt(data.admission.split("-")[0])+data.scSystem + "-6";
+                        that.pro = data.profession;
+                    }
+                });
+                layui.use('table', function(){
+                    var table = layui.table;
+                    table.render({
+                        elem: '#by',
+                        url:"../../score/getAllScoreN.do",
+                        where: {str:"必修,课外必修,实践",id:uId},
+                        method: 'post',
+                        page: false,
+                        limit:9999,
+                        width:795,
+                        cols: [[
+                            {field: 'course_name', title: '必修课 课程名称', width: 250,align:"center"},
+                            {field: 'classHour', title: '学时', width: 120,align:"center"},
+                            {field: 'credit', title: '学分', width:120,align:"center"},
+                            {field: 'sem', title: '学期', width:200,align:"center"},
+                            {field: 'score',title:'成绩',width:100,align:"center"}
+                        ]]
+                    });
+                    table.render({
+                        elem: '#demo',
+                        url:"../../score/getAllScoreZ.do",
+                        where: {str:descr,id:uId},
+                        method: 'post',
+                        page: false,
+                        limit:9999,
+                        width:795,
+                        cols: [[
+                            {field: 'course_name', title: '指定选修课 课程名称', width: 250,align:"center"},
+                            {field: 'classHour', title: '学时', width: 120,align:"center"},
+                            {field: 'credit', title: '学分', width:120,align:"center"},
+                            {field: 'sem', title: '学期', width:200,align:"center"},
+                            {field: 'score',title:'成绩',width:100,align:"center"}
+                        ]]
+                    });
+                });
+            }
+        }
+    });
+</script>
+</html>

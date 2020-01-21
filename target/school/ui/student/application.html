@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../icon/iconfont.css">
+    <script src="../../icon/iconfont.js"></script>
+</head>
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        top: 0;
+    }
+    .application{
+        width: calc(100% - 45px);
+        height: 100%;
+        margin: 0px 10px;
+        top: 0;
+    }
+    .filter{
+        width: calc(100% - 20px);
+        padding: 5px 10px;
+        margin-bottom: 10px;
+        height: 60px;
+        border: 1px solid #CCC;
+        border-radius: 0.4rem;
+        box-shadow: 0 0 0.1rem #c2c2c2;
+    }
+    .filter_top{
+        color: #5292ec;
+        height: 30px;
+        line-height: 30px;
+    }
+    .filter_bottom{
+        height: 30px;
+        line-height: 30px;
+    }
+    .resultContain{
+        width: 100%;
+        overflow: hidden;
+        height: calc(100% - 100px);
+    }
+    .result{
+        width: calc(100% + 20px);
+        height: 100%;
+        overflow-y: scroll;
+    }
+    .result_item{
+        width: 100%;
+    }
+    .ti{
+        margin-left: 10px;
+    }
+    .title{
+        text-align: center;
+        margin-top: 10px;
+        font-size: 18px;
+    }
+    .sub{
+        text-align:center;
+    }
+    .layui-border-box{
+        border: none;
+    }
+</style>
+<body>
+<div class="application">
+    <div class="filter">
+        <div class="filter_top"><span class="iconfont icon-saixuan"></span>筛选条件</div>
+        <div class="filter_bottom">所需学分：
+            <div class="layui-input-inline" v-if="!flag">
+                <input type="text" class="credit" v-model="all">
+            </div>
+            <span class="ti" v-if="flag">{{all}}</span>
+            <button type="button" class="layui-btn layui-btn-normal layui-btn-xs" v-if="!flag" @click="flag = !flag;">确定</button>
+            <button type="button" class="layui-btn layui-btn-normal layui-btn-xs" v-if="flag" @click="flag = !flag;">修改</button>
+            <span class="ti">已选学分：{{count}}</span>
+            <span class="ti">剩余需选学分：{{all-count}}</span>
+        </div>
+    </div>
+    <div class="resultContain">
+        <div class="result">
+            <div class="result_item">
+                <div class="title">必选课程</div>
+                <table id="needTable"></table>
+                <div class="title">自选课程</div>
+                <table id="userTables" lay-filter="userTables"></table>
+                <div class="sub"><button type="button" class="layui-btn layui-btn-normal layui-btn-xs" @click="pushApp()">提交申请</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var application = new Vue({
+        el: ".application",
+        name: "application",
+        data: function () {
+            return {
+                all: 0,
+                count: 0,
+                flag: false
+            }
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            pushApp:function(){
+                var code = this.ids.join(",")
+                $.ajax({
+                    type: 'POST',
+                    url:"../../score/pushScore.do",
+                    data:{code:code},
+                    success:function () {
+                        layer.msg("提交成功！");
+                    }
+                });
+            },
+            layInit:function () {
+                var that = this;
+                layui.use(["table", "layer"], function () {
+                    var layer = layui.layer,
+                        table = layui.table;
+                    $.ajax({
+                        type: 'POST',
+                        url: "../../score/getAllScore.do",
+                        data: {type: "必修,课外必修,实践"},
+                        success: function (result) {
+                            var data = [];
+                            if (result.returnCode == 100) {
+                                data = result.returnData;
+                                $.each(result.returnData, function (index, item) {
+                                    that.count += item.credit;
+                                });
+                            }
+                            var height = 0;
+                            if(data.length<10){
+                                height = data.length*38+22;
+                            }else{
+                                height = 402;
+                            }
+                            table.render({
+                                elem: "#needTable",
+                                cols: [[
+                                    {field: 'school_year', title: '学年'},
+                                    {field: "semester",title: "学期",width:60},
+                                    {field: "course_code", title: "课程代码"},
+                                    {field: "course_name", title: "课程名称"},
+                                    {field: "course_nature", title: "课程性质"},
+                                    {field: 'credit', title: '学分'},
+                                    {field: "score",title: "成绩"},
+                                    {field: "retest", title: "补考成绩"},
+                                    {field: "rebuild", title: "是否重修"},
+                                    {field: "college", title: "开课学院"},
+                                    {field: "remarks", title: "备注"},
+                                    {field: "rRemarks", title: "补考备注"}
+                                ]],
+                                data:data,
+                                page:false,
+                                limit:data.length
+                            });
+                        }
+                    });
+                    var ids = that.ids =  new Array();
+                    var table_data= new Array();
+                    table.render({
+                        elem: "#userTables",
+                        cols: [[
+                            {checkbox: true},
+                            {field: 'school_year', title: '学年'},
+                            {field: "semester",title: "学期",width:60},
+                            {field: "course_code", title: "课程代码"},
+                            {field: "course_name", title: "课程名称"},
+                            {field: "course_nature", title: "课程性质"},
+                            {field: 'credit', title: '学分'},
+                            {field: "score",title: "成绩"},
+                            {field: "retest", title: "补考成绩"},
+                            {field: "rebuild", title: "是否重修"},
+                            {field: "college", title: "开课学院"},
+                            {field: "remarks", title: "备注"},
+                            {field: "rRemarks", title: "补考备注"}
+                        ]],
+                        url: "../../score/getAllScoreNot.do",
+                        where: { str: "必修,课外必修,实践" },
+                        page: {
+                            layout: ['count', 'prev', 'page', 'next'],
+                            curr: 1,
+                            limit: 10,
+                            groups: 5
+                        },
+                        done: function(res, curr, count){
+                            table_data=res.data;
+                            for(var i=0;i< res.data.length;i++){
+                                for (var j = 0; j < ids.length; j++) {
+                                    if(res.data[i].course_code == ids[j]){
+                                        res.data[i]["LAY_CHECKED"]='true';
+                                        var index= res.data[i]['LAY_TABLE_INDEX'];
+                                        $('.layui-table tr[data-index=' + index + '] input[type="checkbox"]').prop('checked', true);
+                                        $('.layui-table tr[data-index=' + index + '] input[type="checkbox"]').next().addClass('layui-form-checked');
+                                    }
+                                }
+                            }
+                            var checkStatus = table.checkStatus('userTables');
+                            if(checkStatus.isAll){
+                                $(' .layui-table-header th[data-field="0"] input[type="checkbox"]').prop('checked', true);
+                                $('.layui-table-header th[data-field="0"] input[type="checkbox"]').next().addClass('layui-form-checked');
+                            }
+                        }
+                    });
+                    table.on('checkbox(userTables)', function (obj) {
+                        if(obj.checked==true){
+                            if(obj.type=='one'){
+                                that.count += obj.data.credit;
+                                ids.push(obj.data.course_code);
+                            }else{
+                                for(var i=0;i<table_data.length;i++){
+                                    var id = table_data[i].course_code;
+                                    if(ids.indexOf(id)==-1){
+                                        that.count += table_data[i].credit;
+                                        ids.push(id);
+                                    }
+                                }
+                            }
+                        }else{
+                            if(obj.type=='one'){
+                                for(var i=0;i<ids.length;i++){
+                                    if(ids[i]==obj.data.course_code){
+                                        that.count -= obj.data.credit;
+                                        ids.remove(i);
+                                    }
+                                }
+                            }else{
+                                for(var i=0;i<ids.length;i++){
+                                    for(var j=0;j<table_data.length;j++){
+                                        if(ids[i]==table_data[j].course_code){
+                                            that.count -= table_data[j].credit;
+                                            ids.remove(i);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+
+                Array.prototype.remove=function(dx) {
+                    if( isNaN(dx) || dx > this.length ){
+                        return false;
+                    }
+                    for(var i=0,n=0;i<this.length;i++){
+                        if( this[i] != this[dx] ){
+                            this[n++]=this[i]
+                        }
+                    }
+                    this.length-=1
+                }
+            }
+        }
+    });
+</script>
+</html>

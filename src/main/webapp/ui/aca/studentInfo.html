@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/all.css">
+</head>
+
+<style type="text/css">
+    #studentInfo{
+        height: 100%;
+        width: calc(100% - 50px);
+        margin: 0;
+        padding: 0;
+    }
+    .xz > select{
+        width: 70px;
+    }
+</style>
+<body>
+<div id="studentInfo">
+    <div class="search">
+        <div class="xy">学院:
+            <select id="xy" @change="xyChange()">
+                <template v-for="(col,index) in college">
+                    <option :value="index">{{col.name}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="yy">院系:
+            <select id="yy" @change="yyChange()">
+                <template v-for="(dep,index) in department">
+                    <option :value="index" >{{dep.name}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="zy">专业:
+            <select id="zy" @change="zynjChange()">
+                <template v-for="(pro,index) in profession">
+                    <option :value="index" >{{pro}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="nj">年级：
+            <select id="nj" @change="zynjChange()">
+                <option value="-1">全部</option>
+                <template v-for="item in year">
+                    <option :vale="item">{{item}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="bj">班级:
+            <select id="bj">
+                <option value="-1">全部</option>
+                <template>
+                    <template v-for="item in bj">
+                        <option :value="item" >{{item}}</option>
+                    </template>
+                </template>
+            </select>
+        </div>
+        <div class="button inq">查询</div>
+    </div>
+    <div class="search">
+        <div class="choose">
+            <select id="type">
+                <option value="name">学生姓名</option>
+                <option value="id">学生学号</option>
+            </select>
+            <input type="text" value="" id="spiVal">
+        </div>
+        <div class="button inq1">准确查询</div>
+    </div>
+    <div class="demoContain">
+        <table class="layui-table">
+            <thead>
+            <tr>
+                <th>学院</th>
+                <th>系部</th>
+                <th>专业</th>
+                <th>年级</th>
+                <th>班级</th>
+                <th>学号</th>
+                <th>姓名</th>
+                <th>性别</th>
+                <th>手机号</th>
+                <th>学籍状态</th>
+                <th>户籍地区</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div id="page"></div>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var studentInfo = new Vue({
+        el: "#studentInfo",
+        name: "studentInfo",
+        data: function () {
+            return {
+                college:[],
+                department:[],
+                profession:[],
+                bjs:[],
+                bj:[],
+                year:[],
+                curr_page:1
+            }
+        },
+        mounted: function () {
+            this.getList();
+        },
+        methods: {
+            xyChange:function(){
+                var index = $('#xy').val();
+                this.department = this.college[index].department;
+                this.profession = this.department[0].profession;
+                $("#yy").val(0);
+                $("#zy").val(0);
+                var name = this.profession[0];
+                var time = $('#nj').val();
+                this.bj = [];
+                if(time==-1) {
+                    for (var i = 0; i < this.bjs.length; i++) {
+                        var v = this.bjs[i];
+                        if (v.parent_name == name) {
+                            this.bj.push(v.class_id);
+                        }
+                    }
+                }else{
+                    for (var i = 0; i < this.bjs.length; i++) {
+                        var v = this.bjs[i];
+                        if (v.parent_name == name && parseInt(v.grade)==time) {
+                            this.bj.push(v.class_id);
+                        }
+                    }
+                }
+            },
+            yyChange:function(){
+                var index = $('#yy').val();
+                this.profession = this.department[index].profession;
+                $("#zy").val(0);
+                var name = this.profession[0];
+                var time = $('#nj').val();
+                this.bj = [];
+                if(time==-1) {
+                    for (var i = 0; i < this.bjs.length; i++) {
+                        var v = this.bjs[i];
+                        if (v.parent_name == name) {
+                            this.bj.push(v.class_id);
+                        }
+                    }
+                }else{
+                    for (var i = 0; i < this.bjs.length; i++) {
+                        var v = this.bjs[i];
+                        if (v.parent_name == name && parseInt(v.grade)==time) {
+                            this.bj.push(v.class_id);
+                        }
+                    }
+                }
+            },
+            zynjChange:function(){
+                this.bj = [];
+                var time = $('#nj').val();
+                var index = $('#zy').val();
+                var name = this.profession[index];
+                this.bj = [];
+                if(time==-1) {
+                    for (var i = 0; i < this.bjs.length; i++) {
+                        var v = this.bjs[i];
+                        if (v.parent_name == name) {
+                            this.bj.push(v.class_id);
+                        }
+                    }
+                }else{
+                    for (var i = 0; i < this.bjs.length; i++) {
+                        var v = this.bjs[i];
+                        if (v.parent_name == name && parseInt(v.grade)==time) {
+                            this.bj.push(v.class_id);
+                        }
+                    }
+                }
+            },
+            layInit:function(){
+                var that = this;
+                var flag = true;
+                layui.use(['layer','laypage'], function(){
+                    laypage = layui.laypage;
+                    layer = layui.layer;
+                    //搜索框点击事件
+                    $('.inq').on('click', function(){
+                        that.initUserList();
+                        layer.msg("查询成功！");
+                        flag = true;
+                        return false;
+                    });
+                    $('.inq1').on('click', function(){
+                        that.initUserList1();
+                        layer.msg("查询成功！");
+                        flag = false;
+                        return false;
+                    });
+                    //初始化表格数据
+                    that.initUserList();
+                    $(document).on('click','.vi',function () {
+                        var id=$(this).attr("id");
+                        layer.open({
+                            type: 2,
+                            title:false,
+                            area: ['1130px', '500px'],
+                            content: ['personalInfo.html?'+ id, 'no']
+                        });
+                    });
+                });
+            },
+            initUserList:function(pn,pageSize){
+                var that = this;
+                var col = this.college[$('#xy').val()].name;
+                var dep = this.department[$('#yy').val()].name;
+                var pro = this.profession[$('#zy').val()];;
+                var year = $('#nj').val();
+                var bj = $("#bj").val();
+                var params = {col:col,dep:dep,pro:pro,year:year,bj:bj,pn:pn,pageSize:pageSize};
+                $.ajax({
+                    type: 'POST',
+                    url:"../../student/getStudentList.do",
+                    data:params,
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append(item.college);
+                                var td2=$("<td></td>").append(item.department);
+                                var td3=$("<td></td>").append(item.profession);
+                                var td12 = $("<td></td>").append(item.grade);
+                                var td4=$("<td></td>").append(item.admClass);
+                                var td5=$("<td></td>").append(item.userId);
+                                var td6=$("<td></td>").append(item.username);
+                                var td7=$("<td></td>").append(item.sex==0?'女':'男');
+                                var td8=$("<td></td>").append(item.phone);
+                                var td9=$("<td></td>").append(item.status);
+                                var td10=$("<td></td>").append(item.source);
+                                var td11=$("<td></td>").addClass("td-manage");
+                                td11.append($("<button></button>").addClass("layui-btn  layui-btn-sm layui-btn-normal vi").attr("id",item.userId).append("编辑"));
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td12).append(td4).append(td5).append(td6).append(td7).append(td8).append(td9).append(td10).append(td11));
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            that.curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:that.curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=that.curr_page){
+                                            that.initUserList(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            },
+            initUserList1:function(pn,pageSize){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../student/getStudentSp.do",
+                    data:{type:$("#type").val(),spiVal:$("#spiVal").val(),pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append(item.college);
+                                var td2=$("<td></td>").append(item.department);
+                                var td3=$("<td></td>").append(item.profession);
+                                var td12 = $("<td></td>").append(item.grade);
+                                var td4=$("<td></td>").append(item.admClass);
+                                var td5=$("<td></td>").append(item.userId);
+                                var td6=$("<td></td>").append(item.username);
+                                var td7=$("<td></td>").append(item.sex==0?'女':'男');
+                                var td8=$("<td></td>").append(item.phone);
+                                var td9=$("<td></td>").append(item.status);
+                                var td10=$("<td></td>").append(item.source);
+                                var td11=$("<td></td>").addClass("td-manage");
+                                td11.append($("<button></button>").addClass("layui-btn  layui-btn-sm layui-btn-normal vi").attr("id",item.userId).append("编辑"));
+                                td11.append($("<button></button>").addClass("layui-btn  layui-btn-sm layui-btn-danger vj").attr("id",item.userId).append("删除"));
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td12).append(td4).append(td5).append(td6).append(td7).append(td8).append(td9).append(td10).append(td11));
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            that.curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:that.curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=that.curr_page){
+                                            that.initUserList1(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            },
+            getList: function () {
+                var That = this;
+                $.post('../../student/getList.do',{},function(da) {
+                    if(da.college.length>0){
+                        That.college = da.college;
+                        That.department = That.college[0].department;
+                        That.profession = That.department[0].profession;
+                        That.bjs = da.admClass;
+                        var y = new Date().getFullYear();
+                        for(var i= y;i>1910;i--){
+                            That.year.push(i);
+                        }
+                        var name = That.profession[0];
+                        for(var i=0;i<That.bjs.length;i++){
+                            var v = That.bjs[i];
+                            if(v.parent_name == name){
+                                That.bj.push(v.class_id);
+                            }
+                        }
+                    }
+                    That.layInit();
+                });
+            }
+        }
+    });
+</script>
+</html>

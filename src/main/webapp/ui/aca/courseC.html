@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .courseBy{
+        text-align: center;
+        padding: 0px 5px 0px 5px;
+    }
+    .layui-border-box{
+        border: none;
+    }
+</style>
+<body>
+<div class="courseBy">
+    <table id="by" lay-filter="by">
+    </table>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    function layInit(){
+        var strHref = location.href;
+        var intPos = strHref.indexOf("?");
+        var str = strHref.substr(intPos + 1);
+        var type = str.split(",")[0];
+        var spiVal = str.split(",")[1];
+        var that = this;
+        layui.use('table', function(){
+            var table = layui.table;
+            table.render({
+                elem: '#by',
+                id:'by',
+                width: 990,
+                height:430,
+                url: '../../course/getCourseC.do',
+                where: {type:type,spiVal:spiVal},
+                method: 'post',
+                page: false,
+                limit:9999,
+                cols: [[
+                    {type:'checkbox'},
+                    {field:'id',hide:true},
+                    {field: 'year', title: '学年', width: 120,align:"center"},
+                    {field: 'semester', title: '学期', width: 120,align:"center"},
+                    {field: 'code', title: '课程代码', width: 120,align:"center"},
+                    {field: 'name', title: '课程名称', width: 120,align:"center"},
+                    {field: 'userId', title: '授课老师id', width: 120,align:"center"},
+                    {field: 'userName', title: '授课老师姓名', width:120,align:"center"},
+                    {field: 'data', title: '上课时间', width:200,align:"center"}
+                ]]
+            });
+        });
+    }
+    layInit();
+    function pushA() {
+        var id = "";
+        layui.use('table', function() {
+            var table = layui.table;
+            var data = table.checkStatus('by').data;
+            for (var i = 0; i < data.length; i++) {
+                id += data[i].id + ",";
+            }
+        });
+        return id;
+    }
+
+</script>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/all.css">
+</head>
+
+<style type="text/css">
+    #resultInq{
+        height: 100%;
+        width: calc(100% - 50px);
+        margin: 0;
+        padding: 0;
+    }
+    .xz > select{
+        width: 70px;
+    }
+    .tableTop{
+        margin-top: 20px;
+        width: 100%;
+        height: 100px;
+    }
+    .tiTable{
+        background-color: #f2f2f2;
+        width: 100%;
+        border: 1px solid #e6e6e6;
+        color: #666;
+    }
+    td{
+        border: 1px solid #e6e6e6;
+        padding: 7px;
+    }
+</style>
+<body>
+<div id="resultInq">
+    <div class="search">
+        <div class="xn">学年:
+            <select id="xn">
+                <template v-for="item in schoolYear">
+                    <option :value="item" >{{item}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="xq">学期:
+            <select id="xq">
+                <template>
+                    <option :value="1" >1</option>
+                    <option :value="2" >2</option>
+                </template>
+            </select>
+        </div>
+        <div class="button">查询</div>
+    </div>
+    <div class="demoContain">
+        <div class="tableTop">
+            <table class="tiTable">
+                <tr>
+                    <td colspan="3" align="center" style="font-size:18px; font-weight:900;  ">{{year}}学年第{{semester}}学习成绩</td>
+                </tr>
+                <tr>
+                    <td>学号：{{id}}</td>
+                    <td>姓名：{{userName}}</td>
+                    <td>学院：{{college}}</td>
+                </tr>
+                <tr>
+                    <td colspan="2">专业：{{pro}}</td>
+                    <td>行政班：{{admClass}}</td>
+                </tr>
+            </table>
+        </div>
+        <table class="layui-table">
+            <thead>
+            <tr>
+                <th>学年</th>
+                <th>学期</th>
+                <th>课程代码</th>
+                <th>课程名称</th>
+                <th>课程性质</th>
+                <th>学分</th>
+                <th>成绩</th>
+                <th>补考成绩</th>
+                <th>是否重修</th>
+                <th>开课学院</th>
+                <th>备注</th>
+                <th>补考备注</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var resultInq = new Vue({
+        el: "#resultInq",
+        name: "resultInq",
+        data: function () {
+            return {
+                schoolYear:[],
+                year:'',
+                semester : 1,
+                id:0,
+                userName:'',
+                college:'',
+                pro:'',
+                admClass:''
+            }
+        },
+        beforeMount:function(){
+            this.getUserInfo();
+            this.getList();
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            getUserInfo:function(){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../student/getUserInfo.do",
+                    data:{},
+                    success:function (result) {
+                        that.id = result.id;
+                        that.userName = result.username;
+                        that.college = result.college;
+                        that.pro = result.profession;
+                        that.admClass = result.admClass;
+                    }
+                })
+            },
+            getList: function () {
+                var y = new Date().getFullYear();
+                for (var i = y; i > 1910; i--) {
+                    this.schoolYear.push((i-1)+"-"+i);
+                }
+                this.year = this.schoolYear[0];
+            },
+            layInit:function(){
+                var that = this;
+                layui.use('layer', function() {
+                    var layer = layui.layer;
+                    $('.button').on('click', function () {
+                        that.year = $("#xn").val();
+                        that.semester = $("#xq").val();
+                        that.initUserList(that.year, that.semester);
+                        layer.msg("查询成功！");
+                        return false;
+                    });
+                    that.initUserList(that.year, that.semester);
+                });
+            },
+            initUserList:function(year,semester){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../score/getScore.do",
+                    data:{schoolYear:year,semester:semester,id: that.id},
+                    success:function(result){
+                        $(".layui-table tbody").empty();
+                        $.each(result, function (index, item) {
+                            var td1 = $("<td></td>").append(item.school_year);
+                            var td2 = $("<td></td>").append(item.semester);
+                            var td3 = $("<td></td>").append(item.course_code);
+                            var td4 = $("<td></td>").append(item.course_name);
+                            var td5 = $("<td></td>").append(item.course_nature);
+                            var td6 = $("<td></td>").append(item.credit);
+                            var td7 = $("<td></td>").append(item.score);
+                            var td8 = $("<td></td>").append(item.retest ? item.retest : '');
+                            var td9 = $("<td></td>").append(item.rebuild ? item.rebuild : '');
+                            var td10 = $("<td></td>").append(item.college);
+                            var td11 = $("<td></td>").append(item.remarks ? item.remarks : '');
+                            var td12 = $("<td></td>").append(item.rRemarks ? item.rRemarks : '');
+                            $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td4).append(td5).append(td6).append(td7).append(td8).append(td9).append(td10).append(td11).append(td12));
+                        });
+                    }
+                });
+            }
+        }
+    });
+</script>
+</html>

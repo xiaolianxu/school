@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="layUi/css/layui.css" media="all">
+</head>
+<style>
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        top: 0;
+        text-align: center;
+        border: 1px solid rgba(16, 36, 71, 0.4);
+        box-shadow: 10px 10px 4px 0 rgba(0,0,0,0.30), inset 0 0 20px 0 rgba(16, 36, 71, 0.4);
+    }
+    .up{
+        position: absolute;
+        top: calc(50% - 95px);
+        left: calc(50% - 200px);
+        width: 400px;
+        height: 190px;
+    }
+    .a{
+        padding-top: 8px;
+        padding-bottom: 8px;
+        height: 33px;
+    }
+    input{
+        height: 30px;
+        width: 200px;
+        border-radius: 2px;
+        border: 1px solid #9aa0a7;
+        line-height: 30px;
+        text-indent: 10px;
+        font-size: 14px;
+        background-color: #fff;
+        transition: border-color .2s,box-shadow .2s;
+    }
+    input:focus{
+        border-color: #2f86f6!important;
+        box-shadow: 0 0 4px 0 #2f86f6!important;
+    }
+    .button{
+        background-color: #2f86f6;
+        color: #fff;
+        box-shadow: 0 3px 0 #266ecb;
+        display: inline-block;
+        box-sizing: border-box;
+        border-radius: 2px;
+        cursor: pointer;
+    }
+    .button:active, .button:focus {
+        background-color: #1b6fdc;
+    }
+    .button>span {
+        margin: 0 0 0 20px;
+        padding: 0 20px 0 0;
+    }
+    .button>span {
+        min-width: 80px;
+        height: 34px;
+        line-height: 34px;
+        font-size: 14px;
+    }
+</style>
+<body>
+<div class="up">
+    <div class="a">请输入旧密码：<input type="password" class="opsd"/></div>
+    <div class="a">请输入新密码：<input type="password" class="npsd"/></div>
+    <div class="a">请确认新密码：<input type="password" class="npsd2"/></div>
+    <div class="button"><span>确认修改</span></div>
+</div>
+</body>
+<script src="layUi/layui.js"></script>
+<script src="js/outside/jquery.min.js"></script>
+<script>
+    layui.use('layer', function(){
+        $(".button").on("click",function () {
+            var params = {opsd:$(".opsd").val(),npsd:$(".npsd").val(),npsd2:$(".npsd2").val()};
+            $.ajax({
+                type:'POST',
+                url:"user/updatePsd.do",
+                data:JSON.stringify(params),
+                contentType: 'application/json',
+                success:function (data) {
+                    layer.msg(data.data);
+                    if(data.success){
+                        setTimeout(function () {
+                            var index = parent.layer.getFrameIndex(window.name);
+                            parent.layer.close(index);
+                        },1000);
+                    }
+                }
+            })
+
+        })
+    });
+</script>
+</html>

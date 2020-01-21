@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 设置为IUserDao接口方法提供sql语句配置 -->
+<mapper namespace="com.school.dao.studentDao">
+
+    <resultMap id="punRecord" type="com.school.model.punRecord">
+        <result property="id" column="id"/>
+        <result property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="level" column="level"/>
+        <result property="descr" column="descr"/>
+        <result property="reviewId" column="reviewId"/>
+        <result property="reviewName" column="reviewName"/>
+        <result property="time" column="time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <resultMap id="punRecord1" type="com.school.model.punRecord1">
+        <result property="id" column="id"/>
+        <result property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="level" column="level"/>
+        <result property="descr" column="descr"/>
+        <result property="reviewId" column="reviewId"/>
+        <result property="reviewName" column="reviewName"/>
+        <result property="time" column="time"/>
+        <result property="status" column="status"/>
+        <result property="dId" column="dId"/>
+        <result property="dTime" column="dTime"/>
+        <result property="dName" column="dName"/>
+        <result property="reason" column="reason"/>
+    </resultMap>
+
+    <select id="getAmdClass" resultType="map" parameterType="java.util.HashMap">
+        SELECT * FROM class
+    </select>
+
+    <select id="getStudents" resultType="map" parameterType="java.util.HashMap">
+        select college,department,profession,grade,userId,username,admClass,sex,phone,status,source
+        from studentinfo
+        where college = #{col} and department = #{dep} and profession = #{pro}
+        <if test="bj != -1">
+           and admClass = #{bj}
+        </if>
+        <if test="bj == -1 and nj != -1">
+            and grade = #{nj}
+        </if>
+        order by admClass
+    </select>
+
+    <select id="getCreditList" resultType="map" parameterType="java.util.HashMap">
+        select a.college,a.department,a.profession,a.grade,a.userId,a.username,a.admClass,a.status,ifnull(SUM(d.credit),0) as credit , e.descr
+        from studentinfo a
+        left JOIN score b on a.userId = b.user_id
+        left join courseinfo c on b.course_id = c.id
+        left join course d on c.course_code  = d.course_code
+        left JOIN college e on a.profession = e.name
+        where a.college = #{col} and a.department = #{dep} and a.profession = #{pro}
+        <if test="bj != -1">
+            and admClass = #{bj}
+        </if>
+        <if test="bj == -1 and nj != -1">
+            and grade = #{nj}
+        </if>
+        group BY a.userId
+    </select>
+
+    <select id="getCreditCon" resultType="map" parameterType="java.util.HashMap">
+        select a.college,a.department,a.profession,a.grade,a.userId,a.username,a.admClass,a.status,ifnull(SUM(d.credit),0) as credit , e.descr
+        from studentinfo a
+        left JOIN score b on a.userId = b.user_id
+        left join courseinfo c on b.course_id = c.id
+        left join course d on c.course_code  = d.course_code
+        left JOIN college e on a.profession = e.name
+        <if test="flag==0">
+            where a.admClass = #{bj}
+        </if>
+        <if test="flag==1">
+            where a.admClass in
+            <foreach item="item" index="index" collection="bj"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group BY a.userId
+    </select>
+
+    <select id="getStudentBj" resultType="map" parameterType="java.util.HashMap">
+        select college,department,profession,grade,userId,username,admClass,sex,phone,status,source
+        from studentinfo
+        <if test="flag==0">
+            where admClass = #{bj}
+        </if>
+        <if test="flag==1">
+            where admClass in
+            <foreach item="item" index="index" collection="bj"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by admClass,userId
+    </select>
+
+    <select id="getStudentSp" resultType="map" parameterType="java.util.HashMap">
+        select college,department,profession,grade,userId,username,admClass,sex,phone,status,source
+        from studentinfo
+        where
+        <if test="type=='name'">
+            username
+        </if>
+        <if test="type=='id'">
+            userId
+        </if>
+        LIKE '%${spiVal}%'
+        ORDER BY userId
+    </select>
+
+    <select id="getCreditListSp" resultType="map" parameterType="java.util.HashMap">
+        select a.college,a.department,a.profession,a.grade,a.userId,a.username,a.admClass,a.status,ifnull(SUM(d.credit),0) as credit , e.descr
+        from studentinfo a
+        left JOIN score b on a.userId = b.user_id
+        left join courseinfo c on b.course_id = c.id
+        left join course d on c.course_code  = d.course_code
+        left JOIN college e on a.profession = e.name
+        where
+        <if test="type=='name'">
+            a.username
+        </if>
+        <if test="type=='id'">
+            a.userId
+        </if>
+        LIKE '%${spiVal}%'
+        group BY a.userId
+    </select>
+
+    <select id="getStudentC" resultType="map" parameterType="java.util.HashMap">
+        select profession,grade,userId,username,admClass
+        from studentinfo
+        where
+        <if test="type=='name'">
+            username
+        </if>
+        <if test="type=='id'">
+            userId
+        </if>
+        LIKE '%${spiVal}%'
+        ORDER BY userId
+    </select>
+
+    <select id="getCouSt" resultType="map" parameterType="java.util.HashMap">
+        select profession,grade,userId,username,admClass
+        from studentinfo
+        where
+        <if test="type=='name'">
+            username
+        </if>
+        <if test="type=='id'">
+            userId
+        </if>
+        LIKE '%${spiVal}%'
+        and admClass in
+        <foreach item="item" index="index" collection="bj"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        ORDER BY userId
+    </select>
+
+    <select id="getStudentSpB" resultType="map" parameterType="java.util.HashMap">
+        select college,department,profession,grade,userId,username,admClass,sex,phone,status,source
+        from studentinfo
+        where
+        <if test="type=='name'">
+            username
+        </if>
+        <if test="type=='id'">
+            userId
+        </if>
+        LIKE '%${spiVal}%'
+        and admClass
+        in
+        <foreach item="item" index="index" collection="bj"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        ORDER BY userId
+    </select>
+
+    <select id="getCreditConSp" resultType="map" parameterType="java.util.HashMap">
+        select a.college,a.department,a.profession,a.grade,a.userId,a.username,a.admClass,a.status,ifnull(SUM(d.credit),0) as credit , e.descr
+        from studentinfo a
+        left JOIN score b on a.userId = b.user_id
+        left join courseinfo c on b.course_id = c.id
+        left join course d on c.course_code  = d.course_code
+        left JOIN college e on a.profession = e.name
+        where
+        <if test="type=='name'">
+            a.username
+        </if>
+        <if test="type=='id'">
+            a.userId
+        </if>
+        LIKE '%${spiVal}%'
+        and a.admClass
+        in
+        <foreach item="item" index="index" collection="bj"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        group BY a.userId
+    </select>
+
+    <select id="getUserInfo" resultType="map" parameterType="int">
+        select username,college,profession,admClass
+        from studentinfo
+        where userId = #{id}
+    </select>
+
+    <select id="matchStudent" resultType="map" parameterType="java.util.HashMap">
+        select profession,admClass,grade,sex
+        from studentinfo
+        where userId = #{id} and username = #{name}
+    </select>
+
+    <insert id="punEnt" parameterType="java.util.HashMap">
+        insert into punish(userId,level,descr,reviewId,time,status)
+        values (#{sId},#{level},#{descr},#{reviewId},NOW(),0)
+    </insert>
+
+    <select id="punA" resultMap="punRecord">
+        select a.id,a.userId,b.username as userName,a.level,a.descr,a.reviewId,c.userName as reviewName,a.time,a.status
+        from punish a
+        inner join studentinfo b on a.userId = b.userId
+        inner join teacherinfo c on a.reviewId = c.userId
+        where  a.status = 0
+    </select>
+
+    <select id="punB" resultMap="punRecord">
+        select a.id,a.userId,b.username as userName,a.level,a.reason as descr,a.dId as reviewId,c.userName as reviewName,a.dTime as time,a.status
+        from punish a
+        inner join studentinfo b on a.userId = b.userId
+        inner join teacherinfo c on a.dId = c.userId
+        where  a.status = 1
+    </select>
+
+    <select id="punASp" resultMap="punRecord" parameterType="java.util.HashMap">
+        select a.id,a.userId,b.username as userName,a.level,a.descr,a.reviewId,c.userName as reviewName,a.time,a.status
+        from punish a
+        inner join studentinfo b on a.userId = b.userId
+        inner join teacherinfo c on a.reviewId = c.userId
+        where  a.status = 0 and
+        <if test="type=='name'">
+            b.username
+        </if>
+        <if test="type=='id'">
+            a.userId
+        </if>
+        LIKE '%${spiVal}%'
+    </select>
+
+    <select id="punBSp" resultMap="punRecord" parameterType="java.util.HashMap">
+        select a.id,a.userId,b.username as userName,a.level,a.reason as descr ,a.dId as reviewId,c.userName as reviewName,a.dTime as time,a.status
+        from punish a
+        inner join studentinfo b on a.userId = b.userId
+        inner join teacherinfo c on a.dId = c.userId
+        where  a.status = 1 and
+        <if test="type=='name'">
+            b.username
+        </if>
+        <if test="type=='id'">
+            a.userId
+        </if>
+        LIKE '%${spiVal}%'
+    </select>
+
+    <update id="writeOff" parameterType="java.util.HashMap">
+        update punish
+        set dId = #{dId},dTime=NOW(),status = 1,reason=#{reason}
+        where id = #{id};
+    </update>
+
+    <select id="getRecord" parameterType="int" resultMap="punRecord1">
+        select a.*,b.username as userName,c.userName as reviewName,d.userName as dName
+        from punish a
+        inner join studentinfo b on a.userId = b.userId
+        inner join teacherinfo c on c.userId = a.reviewId
+        inner join teacherinfo d on d.userId = a.dId
+        where a.id = #{id};
+    </select>
+
+    <select id="getStudentInfo" resultType="map" parameterType="int">
+        select *
+        from studentinfo
+        where userId = #{id}
+    </select>
+
+    <update id="updateImg" parameterType="java.util.HashMap">
+        update user_image
+        set image_name=#{name}
+        where user_id = #{id}
+    </update>
+
+    <update id="updateInfo" parameterType="java.util.HashMap">
+        update studentinfo
+        set homePhone = #{homePhone} ,mName = #{mName} , mOffice = #{mOffice},fName = #{fName},
+            fOffice = #{fOffice},fPhone = #{fPhone},mPhone = #{mPhone},location = #{address}
+        where userId = #{id}
+    </update>
+
+    <update id="updateInfoS" parameterType="java.util.HashMap">
+        update studentinfo
+        set department = #{department} ,profession = #{profession} , admClass = #{admClass},status = #{status},
+            grade = #{grade}
+        where userId = #{id}
+    </update>
+
+    <select id="getImage" resultType="string" parameterType="int">
+        select image_name as name
+        from user_image
+        where user_id = #{id}
+    </select>
+
+    <select id="getDetail" resultType="map" parameterType="int">
+        select username,profession,admission,scSystem
+        from studentinfo
+        where userId = #{id}
+    </select>
+
+    <select id="getPrePra" resultType="map">
+        select * from coursetype
+    </select>
+
+    <select id="getPrePrb" resultType="map" parameterType="int">
+        select a.descr,a.id
+        from college a
+        where a.name = (
+        select b.profession from studentinfo b where b.userId=#{id}
+        )
+    </select>
+</mapper>

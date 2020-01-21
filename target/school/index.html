@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link href="icon/iconfont.css" rel="stylesheet" type="text/css">
+    <script src="js/outside/jquery.min.js"></script>
+    <script src="icon/iconfont.js"></script>
+    <script src="js/outside/md5.js"></script>
+</head>
+<script>
+    $(document).ready(function(){
+        $("#login").click(function(){
+            var u = $("#userId").val();
+            var inputPass = $("#password").val();
+            var salt = "1a2b3c4d";
+            var str = ""+salt.charAt(0)+salt.charAt(2) + inputPass +salt.charAt(5) + salt.charAt(4);
+            var password = hex_md5(str);
+            var params = {id:parseInt(u),password:password};
+            $.ajax({
+                url: 'user/login.do',
+                data: JSON.stringify(params),
+                type: 'POST',
+                contentType: 'application/json',
+                success: function (data) {
+                    if(data.success==true){
+                        window.location.href="homeHtml";
+                    }else{
+                        alert(data.data);
+                    }
+                }
+            })
+        });
+    });
+
+</script>
+<body>
+    <div class="topTitle"><img src="img/login.png"></div>
+    <div class="main">
+        <div class="login">
+            <div class="all">
+                <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-yonghu1"></use>
+                </svg>
+                <div class="name">用户名：</div>
+                <div class="in"><input type="text" id="userId" placeholder=""/></div>
+            </div>
+            <div class="all">
+                <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-mimasuo"></use>
+                </svg>
+                <div class="name">密&nbsp;&nbsp;&nbsp;码：</div>
+                <div class="in"><input type="password" id="password" placeholder="" onblur="mdjia()"/></div>
+            </div>
+            <div class="loginA"><div id="login">登录</div></div>
+        </div>
+    </div>
+</body>
+
+<style type="text/css">
+    html,body{
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(rgba(108,183,247,0.5) 10%, #FFFFFF 40%);
+    }
+    .topTitle{
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        margin: auto;
+        width: 411px;
+        height: 70px;
+    }
+    .main{
+        position: absolute;
+        top: 30px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: auto;
+        width: 400px;
+        height: 280px;
+        background: url("img/login_right.jpg");
+        background-size: 100% 100%;
+        backface-visibility:hidden;
+    }
+    .login{
+        position: relative;
+        top: 110px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: auto;
+        width: 255px;
+        height: 120px;
+    }
+    .all{
+        width: 100%;
+        height: 30px;
+    }
+    input{
+        outline-style: none ;
+    }
+    .name{
+        width: 65px;
+        margin-left: 10px;
+        float: left;
+        color: #5872af;
+    }
+    .in{
+        width: 164px;
+        float: right;
+    }
+    .icon{
+        padding-top: 2px;
+        float: left;
+        width: 16px;
+        height: 16px;
+        vertical-align: -2.4px;
+        fill: currentColor;
+        overflow: hidden;
+    }
+    .loginA{
+        width: 100%;
+        height: 60px;
+        padding-top: 20px;
+        text-align: center;
+    }
+    #login {
+        margin: 0 auto;
+        text-align: center;
+        width: 35px;
+        border-radius: 4px;
+        text-shadow: 0px 1px 0px #283966;
+        box-shadow: inset 0px 39px 0px -24px #6cb7f7;
+        font-family: Arial;
+        color: #ffffff;
+        font-size: 16px;
+        background: #6dacf2;
+        padding: 5px 15px 5px 15px;
+        border: solid #7b95e4 1px;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    #login:hover{
+        background: #6cb7f7;
+    }
+</style>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        top: 0;
+        font-size: 11px;
+    }
+    #personalInfo{
+        height: calc(100% - 5px);
+        width: 100%;
+        margin: 5px 0 0 -5px ;
+        top: 0px;
+    }
+    .pic{
+        float: left;
+        width: 100px;
+        height: 130px;
+    }
+    img{
+        width: 100%;
+        height: 100%;
+    }
+    table{
+        background-color: #f2f5fa;
+        margin-left: 10px;
+        border: 1px solid #c8d0d3;
+    }
+    td{
+        padding-left: 5px;
+        width: 155px;
+        height: 21px;
+        line-height: 21px;
+    }
+    .tishi{
+        float: right;
+        width: 100px;
+        margin-top: 25px;
+        color: #ff1e29;
+    }
+    input[type="text"]{
+        background-color: #83d0ea;
+        border: 1px solid #bdcddd;
+    }
+</style>
+<body>
+<div id="personalInfo">
+    <table border="1">
+        <tr>
+            <td>学号:</td><td>{{msg.userId}}</td>
+            <td>学生证号：</td><td></td>
+            <td>手机类型：</td><td></td>
+            <td rowspan="6">
+                <div class="pic"><img :src="userImage"/></div>
+            </td>
+        </tr>
+        <tr>
+            <td>姓名：</td><td>{{msg.username}}</td>
+            <td>培养方向：</td><td></td>
+            <td>手机号码：</td><td>{{msg.phone}}</td>
+        </tr>
+        <tr>
+            <td>曾用名：</td><td></td>
+            <td>专业方向：</td><td></td>
+            <td>家庭邮编：</td><td></td>
+        </tr>
+        <tr>
+            <td>性别：</td><td>{{msg.sex==0?'女':'男'}}</td>
+            <td>入学日期：</td><td>{{msg.admission}}</td>
+            <td>家庭电话：</td><td>{{msg.homePhone}}</td>
+        </tr>
+        <tr>
+            <td>出生日期：</td><td>{{msg.birthDay}}</td>
+            <td>毕业中学： </td><td></td>
+            <td>父亲（监护人1）姓名： </td><td>{{msg.mName}}</td>
+        </tr>
+        <tr>
+            <td>民族：</td><td>{{msg.famous}}</td>
+            <td>宿舍号：</td><td></td>
+            <td>父亲（监护人1）单位：</td><td>{{msg.mOffice}}</td>
+        </tr>
+        <tr>
+            <td>籍贯：</td><td></td>
+            <td>电子邮箱：</td><td></td>
+            <td>父亲（监护人1）身份证号：</td><td>{{msg.mIdCard}}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>政治面貌：</td><td>{{msg.political}}</td>
+            <td>联系电话：</td><td>{{msg.phone}}</td>
+            <td>母亲（监护人2）姓名：</td><td>{{msg.fName}}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>来源地区：</td><td>{{msg.source}}</td>
+            <td>邮政编码：</td><td>{{msg.postalCode}}</td>
+            <td>母亲（监护人2）单位：</td><td>{{msg.fOffice}}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>来源省：</td><td>{{msg.province}}</td>
+            <td>准考证号：</td><td></td>
+            <td>母亲（监护人2）身份证号：</td><td>{{msg.fIdCard}}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>出生地：</td><td></td>
+            <td>身份证号：</td><td>{{msg.idCard}}</td>
+            <td>父亲（监护人1）电话或手机：</td><td>{{msg.mPhone}}</td><td></td>
+        </tr>
+        <tr>
+            <td>健康状况：</td><td></td>
+            <td>学历层次：</td><td>{{msg.education}}</td>
+            <td>母亲（监护人2）电话或手机：</td><td>{{msg.fPhone}}</td><td></td>
+        </tr>
+        <tr>
+            <td>学院：</td><td>{{msg.college}}</td>
+            <td>港澳台码：</td><td></td>
+            <td>家庭地址：</td><td colspan="2">{{msg.location}}</td>
+        </tr>
+        <tr>
+            <td>系：</td><td>{{msg.department}}</td>
+            <td>报道号：</td><td></td>
+            <td>家庭所在地（/省/县）：</td><td colspan="2">{{msg.address}}</td>
+        </tr>
+        <tr>
+            <td>专业名称：</td><td>{{msg.profession}}</td>
+            <td>是否高水平运动员：</td><td></td>
+            <td rowspan="4">备注：</td>
+            <td rowspan="4" colspan="2"></td>
+        </tr>
+        <tr>
+            <td>教学班名称：</td><td></td>
+            <td>英语等级：</td><td></td>
+        </tr>
+        <tr>
+            <td>行政班：</td><td>{{msg.admClass}}</td>
+            <td>英语成绩：</td><td></td>
+        </tr>
+        <tr>
+            <td>学制：</td><td>{{msg.scSystem}}</td>
+            <td>录检表页码：</td><td></td>
+        </tr>
+        <tr>
+            <td>学习年限：</td><td></td>
+            <td>特长：</td><td></td>
+            <td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td>学籍状态：</td><td>{{msg.status}}</td>
+            <td>入党（团）时间：</td><td></td>
+            <td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td>当前所在级：</td><td>{{msg.grade}}</td>
+            <td>火车终点站：</td><td>{{msg.source}}</td>
+            <td colspan="2">证明人：</td><td colspan="2"></td>
+        </tr>
+        <tr>
+            <td>考生号：</td><td>{{msg.candidate}}</td>
+            <td>学习形式：</td><td></td>
+            <td></td><td></td><td></td>
+        </tr>
+    </table>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var personalInfo = new Vue({
+        el: "#personalInfo",
+        name: "personalInfo",
+        data: function () {
+            return {
+                userImage:'',
+                msg:{},
+                id:0
+            }
+        },
+        mounted:function () {
+            this.init();
+        },
+        methods: {
+            init:function(){
+                var strHref = location.href;
+                var intPos = strHref.indexOf("?");
+                var id = strHref.substr(intPos + 1);
+                this.id = id;
+                var that = this;
+                $.ajax({
+                    type: "POST",
+                    url:"../../student/getStudentInfoS.do",
+                    data:{id:id},
+                    success:function (data) {
+                        that.msg = data;
+                        that.userImage = '/img/'+ data.image;
+                    }
+                });
+            }
+        }
+    });
+</script>
+</html>

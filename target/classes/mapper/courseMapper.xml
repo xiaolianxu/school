@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 设置为IUserDao接口方法提供sql语句配置 -->
+<mapper namespace="com.school.dao.courseDao">
+
+    <resultMap type="com.school.model.courseInfo" id="courseInfo">
+        <result property="courseId" column="id"/>
+        <result property="code" column="course_code"/>
+        <result property="id" column="user_id"/>
+        <result property="name" column="user_name"/>
+        <result property="data" column="data"/>
+        <result property="time" column="time"/>
+        <result property="people" column="people"/>
+        <result property="location" column="location"/>
+    </resultMap>
+
+    <select id="getCollege" resultType="map" parameterType="java.util.HashMap">
+        select name
+        from college
+        where level = 1
+    </select>
+    <select id="getZx" resultType="map" parameterType="java.util.HashMap">
+        select type,name
+        from coursetype
+    </select>
+
+    <select id="getCourseInfo" resultMap="courseInfo" parameterType="String">
+        select a.id,a.course_code,a.user_id,b.userName as user_name,a.data,a.people,a.location,a.time
+        from courseinfo a
+        inner join teacherinfo b on a.user_id = b.userId
+        where a.course_code = #{code,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getCourseSp" parameterType="java.util.HashMap" resultType="map">
+         select course_code,course_name,course_nature,school_year,semester,credit,college
+         from course
+         where
+         <if test="type=='name'">
+             course_name
+         </if>
+         <if test="type=='code'">
+             course_code
+         </if>
+         LIKE '%${spiVal}%'
+         ORDER BY course_code
+    </select>
+
+    <select id="getCourseC" parameterType="java.util.HashMap" resultType="map">
+        select temp.id,temp.course_code as code,temp.user_id as userId,b.userName,temp.data,a.course_name as name,a.school_year as year,a.semester
+        from courseinfo temp
+        inner join course a on temp.course_code = a.course_code
+        inner join teacherinfo b on temp.user_id = b.userId
+        where
+        <if test="type=='code'">a.course_code</if>
+        <if test="type=='name'">a.course_name</if>
+        LIKE '%${spiVal}%'
+    </select>
+
+    <select id="getCourseSpT" parameterType="java.util.HashMap" resultType="map">
+        select a.course_code,a.people,a.data,a.location,b.course_name,b.course_nature,b.school_year,b.semester,b.credit
+        from courseinfo a
+        INNER JOIN course b ON a.course_code = b.course_code where
+        a.user_id = #{id} and
+        <if test="type=='name'">
+            b.course_name
+        </if>
+        <if test="type=='code'">
+            a.course_code
+        </if>
+        LIKE '%${spiVal}%'
+    </select>
+
+    <select id="getCourse" resultType="map" parameterType="java.util.HashMap">
+        select course_code,course_name,course_code,course_nature,school_year,semester,credit,college
+        from course
+        <if test="nature != '-1' || year != '-1' || semester!= -1 || college != '-1'">
+            where
+        </if>
+        <if test="nature != '-1'">
+            course_nature = #{nature}
+        </if>
+        <if test="nature != '-1' and year != '-1'">
+            and
+        </if>
+        <if test="year != '-1'">
+            school_year = #{year}
+        </if>
+        <if test="year != '-1' and semester != -1">
+            and
+        </if>
+        <if test="semester != -1">
+            semester = #{semester}
+        </if>
+        <if test="(nature != '-1' || year != '-1' || semester!= -1) and college != '-1'">
+            and
+        </if>
+        <if test="college != '-1'">
+            college = #{college}
+        </if>
+        ORDER BY course_code
+    </select>
+
+    <select id="getCourseT" resultType="map" parameterType="java.util.HashMap">
+        select a.course_code,a.people,a.data,a.location,b.course_name,b.course_nature,b.school_year,b.semester,b.credit
+        from courseinfo a
+        INNER JOIN course b ON a.course_code = b.course_code where a.user_id = #{id}
+        <if test="year != '-1'">
+            and b.school_year = #{year}
+        </if>
+        <if test="semester != -1">
+            and b.semester = #{semester}
+        </if>
+    </select>
+
+    <select id="getCourseBj" resultType="map" parameterType="java.util.HashMap">
+        select a.course_code,c.type
+        from courseinfo a
+        inner join score b on b.course_id = a.id
+        inner join course c on a.course_code = c.course_code
+        where b.user_id in (select temp.userId from studentinfo temp where temp.admClass = #{bj} ) and c.school_year = #{year} and c.semester = #{semester}
+        group by a.course_code
+    </select>
+
+    <select id="getCourseSt" resultType="map" parameterType="java.util.HashMap">
+        select a.course_code,b.course_id,c.type
+        from courseinfo a
+        inner join score b on b.course_id = a.id
+        inner join course c on a.course_code = c.course_code
+        where b.user_id = #{id} and c.school_year = #{year} and c.semester = #{semester}
+        group by a.course_code
+    </select>
+
+    <select id="getCourseR" resultType="map" parameterType="int">
+        select a.course_code,a.data,a.id,b.course_name,b.school_year,b.semester,b.type
+        from courseinfo a
+        INNER JOIN course b
+        ON a.course_code = b.course_code
+        where a.user_id = #{id}
+    </select>
+
+    <select id="getB" resultType="map">
+        select * from course;
+    </select>
+
+    <select id="getAllCourse" resultType="map">
+        select course_code as courseCode ,course_name as courseName
+        from course
+    </select>
+
+    <select id="getTeacher" resultType="map">
+        select b.userId,b.userName
+        from user a
+        inner join teacherinfo b on a.user_id = b.userId
+        where a.role_id = 2
+    </select>
+
+    <select id="getCourseName" resultType="String" parameterType="java.util.HashMap">
+        select course_name
+        from course
+        where course_code = #{course}
+    </select>
+
+    <select id="getScoreBj" resultType="map" parameterType="java.util.HashMap">
+        select sum(case when a.score between 95 and 100 then 1 else 0 end) as A,
+        sum(case when a.score between 85 and 94 then 1 else 0 end) as B,
+        sum(case when a.score between 75 and 84 then 1 else 0 end) as C,
+        sum(case when a.score between 60 and 74 then 1 else 0 end) as D,
+        sum(case when a.score &lt; 60 then 1 else 0 end) as E
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        where b.course_code=#{course}
+    </select>
+
+    <select id="getScoreBjOne" resultType="map" parameterType="java.util.HashMap">
+        select sum(case when a.score between 95 and 100 then 1 else 0 end) as A,
+        sum(case when a.score between 85 and 94 then 1 else 0 end) as B,
+        sum(case when a.score between 75 and 84 then 1 else 0 end) as C,
+        sum(case when a.score between 60 and 74 then 1 else 0 end) as D,
+        sum(case when a.score &lt; 60 then 1 else 0 end) as E
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        inner join studentinfo c on a.user_id = c.userId
+        where b.course_code=#{course} and c.admClass = #{bj}
+    </select>
+
+    <select id="getScoreBjTop" resultType="map" parameterType="java.util.HashMap">
+        select c.userId,c.username,a.score
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        inner join studentinfo c on a.user_id = c.userId
+        where b.course_code=#{course} and c.admClass = #{bj}
+        order by CONVERT(a.score,SIGNED) desc limit 5
+    </select>
+
+    <select id="getScoreBjBottom" resultType="map" parameterType="java.util.HashMap">
+        select c.userId,c.username,a.score
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        inner join studentinfo c on a.user_id = c.userId
+        where b.course_code=#{course} and c.admClass = #{bj}
+        order by CONVERT(a.score,SIGNED) ASC limit 5
+    </select>
+
+    <select id="getScoreBj1" resultType="map" parameterType="java.util.HashMap">
+        select sum(case when a.score='优秀' then 1 else 0 end) as A,
+        sum(case when a.score='良好' then 1 else 0 end) as B,
+        sum(case when a.score='中等' then 1 else 0 end) as C,
+        sum(case when a.score='及格' then 1 else 0 end) as D,
+        sum(case when a.score='不及格' then 1 else 0 end) as E
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        where b.course_code=#{course}
+        order by a.score
+    </select>
+
+    <select id="getScoreBj1One" resultType="map" parameterType="java.util.HashMap">
+        select  sum(case when a.score='优秀' then 1 else 0 end) as A,
+        sum(case when a.score='良好' then 1 else 0 end) as B,
+        sum(case when a.score='中等' then 1 else 0 end) as C,
+        sum(case when a.score='及格' then 1 else 0 end) as D,
+        sum(case when a.score='不及格' then 1 else 0 end) as E
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        inner join studentinfo c on a.user_id = c.userId
+        where b.course_code=#{course} and c.admClass = #{bj}
+        order by a.score
+    </select>
+
+    <select id="getScoreBj1Top" resultType="map" parameterType="java.util.HashMap">
+        select c.userId,c.username,a.score
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        inner join studentinfo c on a.user_id = c.userId
+        where b.course_code=#{course} and c.admClass = #{bj}
+        order by
+        case
+          when a.score='优秀' then 1
+          when a.score='良好' then 2
+          when a.score='中等' then 3
+          when a.score='及格' then 4
+          when a.score='不及格' then 5
+        end,c.userId
+        limit 5
+    </select>
+
+    <select id="getScoreBj1Bottom" resultType="map" parameterType="java.util.HashMap">
+        select c.userId,c.username,a.score
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        inner join studentinfo c on a.user_id = c.userId
+        where b.course_code=#{course} and c.admClass = #{bj}
+        order by
+        case
+          when a.score='不及格' then 1
+          when a.score='及格' then 2
+          when a.score='中等' then 3
+          when a.score='良好' then 4
+          when a.score='优秀' then 5
+        end,c.userId
+        limit 5
+    </select>
+
+    <select id="getScoreStOne" resultType="map" parameterType="java.util.HashMap">
+        select sum(case when a.score between 95 and 100 then 1 else 0 end) as A,
+        sum(case when a.score between 85 and 94 then 1 else 0 end) as B,
+        sum(case when a.score between 75 and 84 then 1 else 0 end) as C,
+        sum(case when a.score between 60 and 74 then 1 else 0 end) as D,
+        sum(case when a.score &lt; 60 then 1 else 0 end) as E
+        from score a
+        where a.course_id=#{courseId}
+    </select>
+
+    <select id="getScoreStOne1" resultType="map" parameterType="java.util.HashMap">
+        select  sum(case when a.score='优秀' then 1 else 0 end) as A,
+        sum(case when a.score='良好' then 1 else 0 end) as B,
+        sum(case when a.score='中等' then 1 else 0 end) as C,
+        sum(case when a.score='及格' then 1 else 0 end) as D,
+        sum(case when a.score='不及格' then 1 else 0 end) as E
+        from score a
+        where a.course_id=#{courseId}
+    </select>
+
+    <select id="getScoreStInfo" resultType="map" parameterType="java.util.HashMap">
+        select temp.rownum,temp.score from
+        (SELECT @rownum:=@rownum+1 AS rownum, a.score,a.user_id
+        FROM  score a,(SELECT @rownum:=0) r
+        where a.course_id=#{courseId}
+        order by CONVERT(a.score,SIGNED) desc
+        ) temp
+        where temp.user_id = #{id}
+    </select>
+
+    <select id="getScoreStr" resultType="map" parameterType="java.util.HashMap">
+        select al.rownum
+        from(
+        select @rownum:=cast(@rownum as SIGNED)+1 AS rownum,temp.user_id
+        from (select a.user_id,a.score
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        where b.course_code=#{course}
+        order by CONVERT(a.score,SIGNED) desc
+        ) temp,(SELECT @rownum:=0) r) al
+        where al.user_id = #{id}
+
+    </select>
+
+    <select id="getScoreStInfo1" resultType="map" parameterType="java.util.HashMap">
+        select temp.rownum,temp.score from
+        (SELECT @rownum:=@rownum+1 AS rownum, a.score,a.user_id
+        FROM  score a,(SELECT @rownum:=0) r
+        where a.course_id=#{courseId}
+        order by
+        case
+          when a.score='优秀' then 1
+          when a.score='良好' then 2
+          when a.score='中等' then 3
+          when a.score='及格' then 4
+          when a.score='不及格' then 5
+        end) temp
+        where temp.user_id = #{id}
+    </select>
+
+    <select id="getScoreStr1" resultType="map" parameterType="java.util.HashMap">
+        select al.rownum
+        from(
+        select @rownum:=cast(@rownum as SIGNED)+1 AS rownum,temp.user_id
+        from (select a.user_id,a.score
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        where b.course_code=#{course}
+        order by
+        case
+          when a.score='优秀' then 1
+          when a.score='良好' then 2
+          when a.score='中等' then 3
+          when a.score='及格' then 4
+          when a.score='不及格' then 5
+        end
+        ) temp,(SELECT @rownum:=0) r) al
+        where al.user_id = #{id}
+    </select>
+</mapper>

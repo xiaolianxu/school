@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 设置为IUserDao接口方法提供sql语句配置 -->
+<mapper namespace="com.school.dao.scoreDao">
+
+    <resultMap type="com.school.model.review" id="review">
+        <result property="id" column="id"/>
+        <result property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="descr" column="descr"/>
+        <result property="appliTime" column="appliTime"/>
+        <result property="result" column="result"/>
+    </resultMap>
+
+    <resultMap type="com.school.model.reviewd" id="reviewd">
+        <result property="id" column="id"/>
+        <result property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="descr" column="descr"/>
+        <result property="appliTime" column="appliTime"/>
+        <result property="result" column="result"/>
+        <result property="reviewTime" column="reviewTime"/>
+        <result property="reviewId" column="reviewId"/>
+        <result property="reviewName" column="reviewName"/>
+    </resultMap>
+
+    <select id="getScore" resultType="map" parameterType="java.util.HashMap">
+        select a.*, d.course_nature,d.school_year,d.semester,d.course_code,d.course_name,d.credit,d.college
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        WHERE a.user_id = #{id} and d.school_year = #{schoolYear} and d.semester = #{semester};
+    </select>
+
+    <select id="getAllScore" resultType="map" parameterType="java.util.HashMap">
+        select a.*, d.course_nature,d.school_year,d.semester,d.course_code,d.course_name,d.credit,d.college
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        WHERE a.user_id = #{id} and d.course_nature
+        in
+        <foreach item="item" index="index" collection="type"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        order by d.course_nature ;
+    </select>
+
+    <select id="getReportList" resultType="com.alibaba.fastjson.JSONObject"  parameterType="java.util.Map">
+        select a.*, d.course_nature,d.school_year,d.semester,d.course_code,d.course_name,d.credit,d.college
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        WHERE a.user_id = #{id}
+        and d.course_nature
+        not in
+        <foreach item="item" index="index" collection="type"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        ORDER BY course_nature limit  #{page} , #{limit};
+    </select>
+
+    <select id="findReportListCount" resultType="java.lang.Integer"  parameterType="java.util.Map">
+        select COUNT(*)
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        WHERE a.user_id = #{id} and d.course_nature
+        not in
+        <foreach item="item" index="index" collection="type"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="getAllScoreN" resultType="map" parameterType="java.util.HashMap">
+        select c.course_name,c.credit,c.school_year,c.semester,a.score, c.type,b.data,b.time
+        from score a
+        inner join  courseinfo b on a.course_id=b.id
+        inner join course c on b.course_code = c.course_code
+        WHERE a.user_id = #{id} and c.course_nature
+        in
+        <foreach item="item" index="index" collection="type"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        order by c.school_year,c.semester
+    </select>
+
+    <select id="getAllScoreZ" resultType="map" parameterType="java.util.HashMap">
+        select c.course_name,c.credit,c.school_year,c.semester,a.score, c.type,b.data,b.time
+        from score a
+        inner join  courseinfo b on a.course_id=b.id
+        inner join course c on b.course_code = c.course_code
+        WHERE a.user_id = #{id} and c.course_code
+        in
+        <foreach item="item" index="index" collection="code"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        order by c.school_year,c.semester
+    </select>
+
+    <select id="creditSub" resultType="map" parameterType="java.util.HashMap">
+        select c.course_name,a.score,c.type,a.course_id
+        from score a
+        inner join courseinfo b on a.course_id  = b.id
+        inner join course c on b.course_code = c.course_code
+        inner join studentinfo d on a.user_id = d.userId
+        where a.user_id=#{id} and d.userName=#{name} and b.course_code=#{code}
+    </select>
+
+    <update id="pushCreditSub" parameterType="java.util.HashMap">
+        update score a
+        set a.score = #{nScore}
+        where course_id = #{courseId} and user_id=#{id}
+    </update>
+
+    <update id="refused" parameterType="java.util.HashMap">
+        update apply
+        set result=2,reviewId = #{userId},reviewName = #{name},reviewTime = NOW()
+        where id = #{id}
+    </update>
+
+    <update id="dealWith" parameterType="java.util.HashMap">
+        update apply
+        set result=#{deal},reviewId = #{userId},reviewTime = NOW()
+        where id = #{id}
+    </update>
+
+    <insert id="updateCreditSub" parameterType="java.util.HashMap">
+        insert into creditSub(userId,courseId,oldScore,newScore,award,descr,reviewId)
+         VALUES (#{sId},#{courseId},#{oScore},#{nScore},#{level},#{desc},#{id})
+    </insert>
+
+    <select id="getAltRecord" resultType="map" parameterType="java.util.HashMap">
+        select a.*,b.username as userName,c.course_code as courseCode,c.course_name as courseName,d.userName as reviewName
+        from creditSub a
+        inner join studentinfo b on a.userId = b.userId
+        inner join courseinfo e on a.courseId = e.id
+        inner join course c on e.course_code = c.course_code
+        inner join teacherinfo d on a.reviewId = d.userId
+        where
+        <if test="type=='userId'">
+            b.userId
+        </if>
+        <if test="type=='userName'">
+            b.username
+        </if>
+        LIKE '%${spiVal}%'
+    </select>
+
+    <insert id="pushScore" parameterType="java.util.HashMap">
+        insert into apply(userId,descr,result,appliTime)
+        values (#{id},#{code},0,NOW())
+    </insert>
+
+    <select id="getCredit" resultType="java.lang.Integer" parameterType="java.util.HashMap">
+        select sum(c.credit)
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        inner join course c on b.course_code = c.course_code
+        WHERE a.user_id = #{id} and c.course_nature
+        in
+        <foreach item="item" index="index" collection="type"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="getReview" resultMap="review">
+        select a.id,a.userId,b.username as userName,a.descr,a.appliTime,a.result
+        from apply a
+        inner join studentinfo b on a.userId = b.userId
+        where a.result = 0
+    </select>
+
+    <select id="getDetails" resultType="review" parameterType="java.util.HashMap">
+        select a.id,a.userId,b.username as userName,a.descr,a.appliTime,a.result
+        from apply a
+        inner join studentinfo b on a.userId = b.userId
+        where a.userId = #{userId}
+        <if test="type!=-1">
+           and a.result = #{type}
+        </if>
+        order by a.appliTime desc
+    </select>
+
+    <select id="getReviewd" resultMap="reviewd" parameterType="int">
+        select a.id,a.userId,b.username as userName,a.descr,a.appliTime,a.result,a.reviewId,c.userName as reviewName,a.reviewTime
+        from apply a
+        inner join studentinfo b on a.userId = b.userId
+        inner join teacherinfo c on a.reviewId = c.userId
+        <if test="type!=-1">
+            where a.result = #{type}
+        </if>
+        order by a.reviewTime desc
+    </select>
+
+    <select id="getScoreList" resultType="map" parameterType="java.util.HashMap">
+        select a.*,d.school_year,d.semester,d.course_code,d.course_name,d.course_nature,e.username as user_name,e.admClass,d.credit,d.college
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        inner join studentinfo e on a.user_id  = e.userId
+        where d.course_code = #{code}
+        <if test="list!=''">
+            and a.course_id in
+            <foreach item="item" index="index" collection="list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getBjScore" resultType="map" parameterType="java.util.HashMap">
+        select a.*,d.course_code,d.course_name,d.course_nature,e.username as user_name,d.credit,d.college
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        inner join studentinfo e on a.user_id  = e.userId
+        where e.admClass = #{bj} and d.school_year = #{schoolYear} and d.semester = #{semester}
+        order by c.course_code,a.score
+    </select>
+
+    <select id="getScoreList1" resultType="map" parameterType="java.util.HashMap">
+        select a.*,d.course_nature,d.school_year,d.semester,d.course_code,d.course_name,e.username as user_name,e.admClass,d.credit,d.college
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        inner join studentinfo e on a.user_id  = e.userId
+        where d.course_code = #{code}
+        <if test="list!=''">
+            and a.course_id in
+            <foreach item="item" index="index" collection="list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getScoreStudent" resultType="map" parameterType="int">
+        select a.*,d.course_nature,d.school_year,d.semester,d.course_code,d.course_name,e.username as user_name,e.admClass,d.credit,d.college
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        inner join studentinfo e on a.user_id  = e.userId
+        where a.user_id = #{id}
+        order by d.school_year,d.semester
+    </select>
+
+    <select id="prePr" parameterType="int" resultType="map">
+        select c.course_nature as nature,sum(c.credit) as credit
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        inner join course c on b.course_code = c.course_code
+        where a.user_id=#{id}
+        GROUP BY c.course_nature
+    </select>
+
+</mapper>

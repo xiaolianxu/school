@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 设置为IUserDao接口方法提供sql语句配置 -->
+<mapper namespace="com.school.dao.classDao">
+
+    <select id="getClassList" resultType="map" parameterType="java.util.HashMap">
+        select a.*,b.userName as user_name
+        from class a
+        inner join teacherinfo b on a.user_id = b.userId
+        where a.fa_name = #{col}
+        <if test="dep != '-1'">
+            and a.pp_name = #{dep}
+        </if>
+        <if test="pro != '-1'">
+            and a.parent_name = #{pro}
+        </if>
+        <if test="nj != -1">
+            and a.grade = #{nj}
+        </if>
+    </select>
+
+    <select id="getClassSp" resultType="map" parameterType="java.util.HashMap">
+        select a.*,b.userName as user_name
+        from class a
+        inner join teacherinfo b on a.user_id = b.userId
+        where
+        <if test="type=='classId'">
+            a.class_id
+        </if>
+        <if test="type=='userId'">
+            a.user_id
+        </if>
+        <if test="type=='userName'">
+            b.userName
+        </if>
+        LIKE '%${spiVal}%'
+    </select>
+
+    <select id="getClassByC" resultType="map" parameterType="java.util.HashMap">
+        select * from class
+        where
+        user_id = #{userId}
+        <if test="spiVal != null">
+           and class_id  LIKE '%${spiVal}%'
+        </if>
+    </select>
+
+    <select id="getClassBy" resultType="map" parameterType="int">
+        select class_id from class
+        where
+        user_id = #{id}
+    </select>
+
+    <update id="updateClass" parameterType="java.util.HashMap">
+        update class
+        set user_id = #{user_id},classNumber = #{number},studentNumber = #{people}
+        where class_id = #{id}
+    </update>
+</mapper>

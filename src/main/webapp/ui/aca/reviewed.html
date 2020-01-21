@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        top: 0;
+    }
+    .reviewd{
+        width: calc(100% - 45px);
+        height: 100%;
+        margin: 0px 10px;
+        top: 0;
+    }
+    .filter{
+        width: calc(100% - 20px);
+        padding: 5px 10px;
+        margin-bottom: 10px;
+        height: 60px;
+        border: 1px solid #CCC;
+        border-radius: 0.4rem;
+        box-shadow: 0 0 0.1rem #c2c2c2;
+    }
+    .filter_top{
+        color: #5292ec;
+        height: 30px;
+        line-height: 30px;
+    }
+    .filter_bottom{
+        height: 30px;
+        line-height: 30px;
+    }
+</style>
+<body>
+<div class="reviewd">
+    <div class="filter">
+        <div class="filter_top"><span class="iconfont icon-saixuan"></span>筛选条件</div>
+        <div class="filter_bottom">处理结果：
+            <div class="layui-input-inline">
+                <select id="type" style="height: 23px">
+                    <option value="-1">全部</option>
+                    <option value="1">已通过</option>
+                    <option value="2">已拒绝</option>
+                </select>
+            </div>
+            <button type="button" class="layui-btn layui-btn-normal layui-btn-xs" @click="initUserList()">确定</button>
+        </div>
+    </div>
+    <table class="layui-table" lay-filter="demo">
+        <thead>
+        <tr>
+            <th lay-data="{type:'numbers'}">序号</th>
+            <th lay-data="{field:'id'}">id</th>
+            <th lay-data="{field:'userId'}">申请人id</th>
+            <th lay-data="{field:'userName'}">申请人姓名</th>
+            <th lay-data="{field:'otime',width:200}">申请时间</th>
+            <th lay-data="{field:'reviewId',}">处理人id</th>
+            <th lay-data="{field:'reviewName',}">处理人姓名</th>
+            <th lay-data="{field:'dtime',width:200}">处理时间</th>
+            <th lay-data="{field:'result',}">处理结果</th>
+            <th lay-data="{field:'descr',hide:true}">详情</th>
+            <th lay-data="{width:100, align:'center', toolbar: '#barDemo'}">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <div id="page"></div>
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看细节</a>
+    </script>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var reviewd = new Vue({
+        el: ".reviewd",
+        name: "reviewd",
+        data: function () {
+            return {
+            }
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            layInit:function(){
+                var that = this;
+                layui.use(['table','layer','laypage'], function(){
+                    laypage = layui.laypage;
+                    that.initUserList();
+                    table = layui.table;
+                    //监听工具条
+                    table.on('tool(demo)', function(obj){
+                        var data = obj.data;
+                        req_data = data;
+                        if(obj.event === 'detail'){
+                            layer.open({
+                                type: 2,
+                                title:false,
+                                area: ['810px', '500px'],
+                                content: ['printInfo.html', 'no']
+                            });
+                        }
+                    });
+                });
+            },
+            initUserList:function(pn,pageSize){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../score/getReviewd.do",
+                    data:{type:$("#type").val(),pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append();
+                                var td2=$("<td></td>").append(item.id);
+                                var td3=$("<td></td>").append(item.userId);
+                                var td4=$("<td></td>").append(item.userName);
+                                var td5=$("<td></td>").append(item.appliTime);
+                                var td6=$("<td></td>").append(item.reviewId);
+                                var td7=$("<td></td>").append(item.reviewName);
+                                var td8=$("<td></td>").append(item.reviewTime);
+                                var td9=$("<td></td>").append(item.result==1?'已通过':'已拒绝');
+                                var td10=$("<td></td>").append(item.descr);
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td4).append(td5).append(td6).append(td7).append(td8).append(td9).append(td10));
+                            });
+                            table.init('demo', {
+                                limit:10
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            that.curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:that.curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=that.curr_page){
+                                            that.initUserList(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+    });
+</script>
+</html>

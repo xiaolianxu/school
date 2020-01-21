@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/all.css">
+</head>
+
+<style type="text/css">
+    #altRecord{
+        height: 100%;
+        width: calc(100% - 50px);
+        margin: 0;
+        padding: 0;
+    }
+</style>
+<body>
+<div id="altRecord">
+    <div class="search">
+        <div class="choose">
+            <select id="type">
+                <option value="userId">学生学号</option>
+                <option value="userName">学生姓名</option>
+            </select>
+            <input type="text" value="" id="spiVal">
+        </div>
+        <div class="button inq">准确查询</div>
+    </div>
+    <div class="demoContain">
+        <table class="layui-table">
+            <thead>
+            <tr>
+                <th>id</th>
+                <th>学号</th>
+                <th>姓名</th>
+                <th>课程代码</th>
+                <th>课程名称</th>
+                <th>旧成绩</th>
+                <th>新成绩</th>
+                <th>奖项</th>
+                <th>详细描述</th>
+                <th>处理人id</th>
+                <th>处理人姓名</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div id="page"></div>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var altRecord = new Vue({
+        el: "#altRecord",
+        name: "altRecord",
+        data: function () {
+            return {
+            }
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            layInit:function(){
+                var that = this;
+                layui.use(['layer','laypage'], function(){
+                    laypage = layui.laypage;
+                    that.initUserList();
+                    $('.inq').on('click', function(){
+                        that.initUserList();
+                        layer.msg("查询成功！");
+                        return false;
+                    });
+                });
+            },
+            initUserList:function(pn,pageSize){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../score/getAltRecord.do",
+                    data:{type:$("#type").val(),spiVal:$("#spiVal").val(),pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append(item.id);
+                                var td2=$("<td></td>").append(item.userId);
+                                var td3=$("<td></td>").append(item.userName);
+                                var td4=$("<td></td>").append(item.courseCode);
+                                var td5=$("<td></td>").append(item.courseName);
+                                var td6=$("<td></td>").append(item.oldScore);
+                                var td7=$("<td></td>").append(item.newScore);
+                                var td8=$("<td></td>").append(item.award);
+                                var td9=$("<td></td>").append(item.descr);
+                                var td10=$("<td></td>").append(item.reviewId);
+                                var td11=$("<td></td>").append(item.reviewName);
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td4).append(td5).append(td6).append(td7).append(td8).append(td9).append(td10).append(td11));
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            var curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=curr_page){
+                                            that.initUserList(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+    });
+</script>
+</html>

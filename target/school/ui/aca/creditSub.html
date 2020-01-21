@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        position: relative;
+    }
+    .creditSub{
+        position: absolute;
+        top: calc(50% - 230px);
+        left: calc(50% - 275px);
+        height: 430px;
+        width: 550px;
+        padding-top: 30px;
+        border: 1px solid #CCC;
+        border-radius: 0.4rem;
+        box-shadow: 0 0 0.1rem #c2c2c2;
+    }
+    .layui-form{
+        width: 500px;
+    }
+</style>
+<body>
+<div class="creditSub">
+    <form class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">学生id</label>
+            <div class="layui-input-inline">
+                <input type="text" name="id" required  lay-verify="required" placeholder="id" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">学生姓名</label>
+            <div class="layui-input-inline">
+                <input type="text" name="name" required  lay-verify="required" placeholder="姓名" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">课程代码</label>
+            <div class="layui-input-inline">
+                <input type="text" name="code" required  lay-verify="required" placeholder="课程代码" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">替代分数</label>
+            <div class="layui-input-block">
+                <input type="radio" name="score" value="95" title="95" checked>
+                <input type="radio" name="score" value="85" title="85">
+                <input type="radio" name="score" value="75" title="75">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">奖项等级</label>
+            <div class="layui-input-block">
+                <input type="radio" name="level" value="国家级" title="国家级" checked>
+                <input type="radio" name="level" value="省级" title="省级">
+                <input type="radio" name="level" value="校级" title="校级">
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">具体奖项</label>
+            <div class="layui-input-block">
+                <textarea name="desc" required lay-verify="required" placeholder="请输入内容" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+            </div>
+        </div>
+    </form>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var creditSub = new Vue({
+        el: ".creditSub",
+        name: "creditSub",
+        data: function () {
+            return {
+
+            }
+        },
+        mounted: function () {
+            this.init();
+        },
+        methods: {
+            init:function () {
+                var that = this;
+                layui.use(['form','layer'], function(){
+                    var form = layui.form;
+                    var layer = layui.layer;
+                    form.on('submit(formDemo)', function(data){
+                        $.ajax({
+                            type: 'POST',
+                            url:"../../score/creditSub.do",
+                            data:data.field,
+                            success:function (da) {
+                               if(da==""){
+                                   layer.msg('您输入的课程代码或用户信息错误，请重新输入！');
+                               }else{
+                                   var score = data.field.score;
+                                   if(da.type==1){
+                                       if(score==95){
+                                           score = '优秀'
+                                       }else if(score==85){
+                                           score = '良好'
+                                       }else if(score==75){
+                                           score = '中等'
+                                       }
+                                   }
+                                   var con = '<div style="padding: 50px; line-height: 30px; background-color: #393D49; color: #fff; font-weight: 300;">' +
+                                       '学生id：' + data.field.id + '<br/>' +'学生姓名：' + data.field.name + '<br>' +
+                                       '课程代码：'+ data.field.code + '<br/>' +'课程名称：'+ da.course_name + '<br/>'+
+                                       '原始成绩：'+ da.score + '<br/>' + '更改成绩为：' +  score + '<br/>' +
+                                       '奖项等级：' + data.field.level + '<br/>' +
+                                       '具体奖项：' + data.field.desc + '</div>';
+                                   layer.open({
+                                       type: 1,
+                                       title: false,
+                                       closeBtn: false,
+                                       area: '350px;',
+                                       shade: 0.8,
+                                       id: 'LAY_layuipro', //设定一个id，防止重复弹出
+                                       resize: false,
+                                       btn: ['提交', '取消'],
+                                       btnAlign: 'c',
+                                       moveType: 1, //拖拽模式，0或者1
+                                       content: con,
+                                       yes: function(index,layero){
+                                            var params = {sId:data.field.id,sName:data.field.name,
+                                                oScore:da.score,nScore:score,level:data.field.level,desc:data.field.desc,courseId:da.course_id
+                                            };
+                                           $.ajax({
+                                               method:"POST",
+                                               url:"../../score/pushCreditSub.do",
+                                               data:params,
+                                               success:function () {
+                                                   $.ajax({
+                                                       method:"POST",
+                                                       url:"../../score/updateCreditSub.do",
+                                                       data:params,
+                                                       success:function () {
+                                                           layer.msg('提交成功！');
+                                                           layer.close(index);
+                                                       }
+                                                   });
+                                               }
+                                           });
+                                       }
+                                   });
+                               }
+                            }
+                        });
+                        return false;
+                    });
+                });
+            }
+        }
+    });
+</script>
+</html>

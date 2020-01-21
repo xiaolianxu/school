@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .courseBy{
+        text-align: center;
+        padding: 0px 5px 0px 5px;
+    }
+    .layui-border-box{
+        border: none;
+    }
+</style>
+<body>
+<div class="courseBy">
+    <table id="by" lay-filter="by">
+    </table>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var courseBy = new Vue({
+        el: ".courseBy",
+        name: "courseBy",
+        data: function () {
+            return {
+            }
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            layInit:function(){
+                var strHref = location.href;
+                var intPos = strHref.indexOf("?");
+                var code = strHref.substr(intPos + 1);
+                var that = this;
+                layui.use('table', function(){
+                    var table = layui.table;
+                    table.render({
+                        elem: '#by',
+                        width: 868,
+                        height: 330,
+                        url: '../../course/getCourseInfo.do',
+                        where: {code:code},
+                        method: 'POST',
+                        page: false,
+                        limit:9999,
+                        cols: [[
+                            {field: 'code', title: '课程代码', width: 120,align:"center"},
+                            {field: 'id', title: '授课老师id', width: 120,align:"center"},
+                            {field: 'name', title: '授课老师姓名', width:120,align:"center"},
+                            {field: 'data', title: '上课时间', width:200,align:"center"},
+                            {field: 'time',title:'周学时',width:100,align:"center"},
+                            {field: 'location', title: '上课地点', width:100,align:"center"},
+                            {field: 'people', title: '选课人数', width:100,align:"center"}
+                        ]]
+                    });
+                });
+            }
+        }
+    });
+</script>
+</html>

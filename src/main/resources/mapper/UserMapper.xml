@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 设置为IUserDao接口方法提供sql语句配置 -->
+<mapper namespace="com.school.dao.UserDao">
+    <resultMap type="com.school.model.User" id="user">
+        <result property="id" column="user_id"/>
+        <result property="name" column="login_name"/>
+        <result property="role" column="role_id"/>
+    </resultMap>
+    <resultMap id="sex" type="com.school.model.analysis">
+        <result property="fCount" column="female_count"/>
+        <result property="mCount" column="male_count"/>
+    </resultMap>
+    <resultMap id="ana" type="com.school.model.analysis2">
+        <result property="name" column="province"/>
+        <result property="value" column="province_count"/>
+    </resultMap>
+
+    <resultMap id="reward" type="com.school.model.rewRecord">
+        <result property="id" column="id"/>
+        <result property="userId" column="userId"/>
+        <result property="userName" column="username"/>
+        <result property="reviewId" column="reviewId"/>
+        <result property="reviewName" column="reviewName"/>
+        <result property="time" column="time"/>
+        <result property="createTime" column="createTime"/>
+    </resultMap>
+
+    <select id="yanzheng" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+        select count(*)
+        from courseinfo
+        where id in
+        <foreach item="item" index="index" collection="courseId"
+                             open="(" separator="," close=")">
+        #{item}
+        </foreach>
+         and user_id = #{userId}
+    </select>
+
+    <select id="yanzheng1" parameterType="java.util.HashMap" resultType="map">
+        select id
+        from courseinfo
+        where id = #{courseId} and user_id=#{id}
+    </select>
+
+    <select id="yanzheng2" parameterType="java.util.HashMap" resultType="map">
+        select userId
+        from studentinfo
+        where userId = #{userId}
+    </select>
+
+    <insert id="upLoadScore" parameterType="java.util.ArrayList">
+        INSERT ignore
+        score(user_id,course_id,score,retest,rebuild,remarks,rRemarks)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+            (#{item.userId},#{item.courseId},#{item.score},#{item.retest},#{item.rebuild},#{item.remarks},#{item.rRemarks})
+        </foreach>
+    </insert>
+
+    <insert id="upLoadScore1" parameterType="java.util.HashMap">
+        INSERT ignore
+        score(user_id,course_id,score,retest,rebuild,remarks,rRemarks)
+        values (#{userId},#{courseId},#{score},#{retest},#{rebuild},#{remarks},#{rRemarks});
+    </insert>
+
+    <insert id="upLoadClass" parameterType="java.util.ArrayList">
+        INSERT ignore
+        class(class_id,user_id,classNumber,parent_name,pp_name,fa_name,studentNumber,grade)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+             (#{item.classId},#{item.userId},#{item.classNumber},#{item.pro},#{item.dep},#{item.col},#{item.studentNumber},#{item.grade})
+        </foreach>
+    </insert>
+
+    <insert id="upLoadClass1" parameterType="java.util.HashMap">
+        INSERT ignore
+        class(class_id,user_id,classNumber,parent_name,pp_name,fa_name,studentNumber,grade)
+        values (#{classId},#{userId},#{classNumber},#{pro},#{dep},#{col},#{studentNumber},#{grade});
+    </insert>
+
+    <insert id="upLoadReward" parameterType="java.util.ArrayList">
+        insert  into
+        reward(userId,reward,time,reviewId,createTime)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+            (#{item.userId},#{item.content},#{item.time},#{item.reviewId},NOW())
+        </foreach>
+    </insert>
+
+    <insert id="upLoadReward1" parameterType="java.util.HashMap">
+        insert  into
+        reward(userId,reward,time,reviewId,createTime)
+        values (#{userId},#{content},#{time},#{reviewId},NOW())
+    </insert>
+
+    <select id="getRewRecord" resultMap="reward" parameterType="java.util.HashMap">
+        select a.*,b.username,d.userName as reviewName
+        from reward a
+        inner join studentinfo b on a.userId = b.userId
+        inner join teacherinfo d on a.reviewId = d.userId
+        where
+        <if test="type=='userId'">
+            b.userId
+        </if>
+        <if test="type=='userName'">
+            b.username
+        </if>
+        LIKE '%${spiVal}%'
+    </select>
+
+    <insert id="upLoadCourse" parameterType="java.util.ArrayList">
+        insert ignore
+        course(course_code,course_name,course_nature,school_year,semester,credit,college,type)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+            (#{item.code},#{item.name},#{item.nature},#{item.year},#{item.semester},#{item.credit},#{item.college},#{item.type})
+        </foreach>
+    </insert>
+
+    <insert id="upLoadCourse1" parameterType="java.util.HashMap">
+        insert ignore
+        course(course_code,course_name,course_nature,school_year,semester,credit,college,type)
+        values (#{courseCode},#{courseName},#{nature},#{schoolYear},#{semester},#{credit},#{col},#{type})
+    </insert>
+
+    <insert id="upLoadCourseInfo" parameterType="java.util.ArrayList">
+        insert ignore
+        courseinfo(id,course_code,user_id,data,time,location,people)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+            (#{item.id},#{item.code},#{item.userId},#{item.data},#{item.time},#{item.location},#{item.people})
+        </foreach>
+    </insert>
+
+    <insert id="upLoadCourseInfo1" parameterType="java.util.HashMap">
+        insert ignore
+        courseinfo(id,course_code,user_id,data,time,location,people)
+        values (#{courseId},#{courseCode},#{userId},#{data},#{time},#{location},#{people})
+    </insert>
+
+    <insert id="putUser" parameterType="java.util.ArrayList">
+        insert ignore
+        studentinfo(userId,username,sex,birthDay,famous,political,source,province,college,department,profession,
+        admClass,scSystem,status,grade,candidate,admission,phone,postalCode,idCard,education,homePhone,
+        fName,fOffice,fIdCard,mName,mOffice,mIdCard,fPhone,mPhone,address,location)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+            (#{item.userId},#{item.userName},#{item.sex},#{item.birthDay,jdbcType=DATE},#{item.famous},#{item.political},
+            #{item.source},#{item.province},#{item.college},#{item.department},#{item.profession},#{item.admClass},
+            #{item.scSystem},#{item.status},#{item.grade},#{item.candidate},#{item.admission,jdbcType=DATE},#{item.phone},
+            #{item.postalCode},#{item.idCard},#{item.education},#{item.homePhone},#{item.fName},#{item.fOffice},
+            #{item.fIdCard},#{item.mName},#{item.mOffice},#{item.mIdCard},#{item.fPhone},#{item.mPhone},#{item.address},#{item.location}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="addUser" parameterType="java.util.ArrayList">
+        insert ignore user (user_id,login_pwd,role_id)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+            (#{item.userId},#{item.pwd},#{item.role})
+        </foreach>
+    </insert>
+
+    <insert id="putUser3" parameterType="java.util.HashMap">
+        insert ignore
+        studentinfo(userId,username,sex,birthDay,famous,political,source,province,college,department,profession,
+        admClass,scSystem,status,grade,candidate,admission,phone,postalCode,idCard,education,homePhone,
+        fName,fOffice,fIdCard,mName,mOffice,mIdCard,fPhone,mPhone,address,location)
+        values
+            (#{userId},#{userName},#{sex},#{birthDay,jdbcType=DATE},#{famous},#{political},
+            #{source},#{province},#{col},#{dep},#{pro},#{admClass},
+            #{scSystem},#{status},#{grade},#{candidate},#{admission,jdbcType=DATE},#{phone},
+            #{postalCode},#{idCard},#{education},#{homePhone},#{fName},#{fOffice},
+            #{fIdCard},#{mName},#{mOffice},#{mIdCard},#{fPhone},#{mPhone},#{address},#{location}
+            )
+    </insert>
+
+    <insert id="putUser4" parameterType="java.util.HashMap">
+        insert ignore
+        teacherinfo(userId,userName,sex,famous,jobTitle,data,inService,hEducation,institution,phone,political,
+        IDCard,department,address,location,source,province,college,birthDay,major,marry,contract,system,
+        english,engScore,isT,homePhone)
+        values
+            (#{userId},#{userName},#{sex},#{famous},#{jobTitle},#{data,jdbcType=DATE},#{inService},
+            #{hEducation},#{institution},#{phone},#{political},#{idCard},#{department},
+            #{address},#{location},#{source},#{province},#{college},#{birthDay,jdbcType=DATE},#{major},
+            #{marry},#{contract},#{system},#{english},#{engScore},#{isT},#{homePhone}
+            )
+    </insert>
+
+    <insert id="addUser3" parameterType="java.util.HashMap">
+        insert ignore user (user_id,login_pwd,role_id)
+        values
+            (#{userId},#{pwd},#{role})
+    </insert>
+
+    <insert id="addUserImage3" parameterType="java.util.ArrayList">
+        insert ignore user_image(user_id,image_name)
+        values
+            (#{userId},"image")
+    </insert>
+
+    <insert id="putUser1" parameterType="java.util.ArrayList">
+        insert ignore
+        teacherinfo(userId,userName,sex,famous,jobTitle,data,inService,hEducation,institution,phone,political,
+        IDCard,department,address,location,source,province,college,birthDay,major,marry,contract,system,
+        english,engScore,isT,homePhone)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+            (#{item.userId},#{item.userName},#{item.sex},#{item.famous},#{item.jobTitle},#{item.data,jdbcType=DATE},
+            #{item.inService},#{item.hEducation},#{item.institution},#{item.phone},#{item.political},#{item.IDCard},
+            #{item.department},#{item.address},#{item.location},#{item.source},#{item.province},#{item.college},
+            #{item.birthDay,jdbcType=DATE},#{item.major},#{item.marry},#{item.contract},#{item.system},#{item.english},
+            #{item.engScore},#{item.isT},#{item.homePhone})
+        </foreach>
+    </insert>
+
+    <insert id="addUserImage" parameterType="java.util.ArrayList">
+        insert ignore user_image(user_id,image_name)
+        values
+        <foreach collection="list" index="index" separator="," item="item">
+            (#{item.userId},"image")
+        </foreach>
+    </insert>
+
+    <select id="selectUser" resultMap="user" parameterType="java.util.HashMap">
+        SELECT user_id,role_id
+        FROM user
+        WHERE user_id = #{id} and login_pwd = #{password}
+    </select>
+
+    <update id="updatePsd" parameterType="java.util.HashMap">
+        update user
+        set login_pwd = #{password}
+        where user_id = #{id}
+    </update>
+
+    <select id="selectSex" resultMap="sex" parameterType="java.util.HashMap">
+        select sum(case when sex=1 then 1 else 0 end) as male_count,
+        sum(case when sex=0 then 1 else 0 end) as female_count
+        from (select sex from studentinfo
+        <if test="col !=null || dep != null || pro != null || year != null">
+            where
+        </if>
+        <if test="col != null">
+            college = #{col}
+        </if>
+        <if test="col != null and dep != null">
+            and
+        </if>
+        <if test="dep != null">
+            department = #{dep}
+        </if>
+        <if test="dep != null and pro != null">
+            and
+        </if>
+        <if test="pro != null">
+            profession = #{pro}
+        </if>
+        <if test="(col != null || dep != null || pro!= null) and year != null">
+            and
+        </if>
+        <if test="year != null">
+            grade = #{year}
+        </if>
+        ) temp
+    </select>
+
+    <select id="selectAna" resultMap="ana" parameterType="java.util.HashMap">
+        select province,count(*) as province_count
+        from studentinfo
+        <if test="col !=null || dep != null || pro != null || year != null">
+            where
+        </if>
+        <if test="col != null">
+            college = #{col}
+        </if>
+        <if test="col != null and dep != null">
+            and
+        </if>
+        <if test="dep != null">
+            department = #{dep}
+        </if>
+        <if test="dep != null and pro != null">
+            and
+        </if>
+        <if test="pro != null">
+            profession = #{pro}
+        </if>
+        <if test="(col != null || dep != null || pro!= null) and year != null">
+            and
+        </if>
+        <if test="year != null">
+            grade = #{year}
+        </if>
+        GROUP BY province
+    </select>
+
+    <select id="getFDY" resultType="map" parameterType="java.util.HashMap">
+        select a.user_id,b.userName as login_name
+        from user a
+        inner join teacherinfo b on a.user_id = b.userId
+        where a.role_id = 3 and a.user_id != #{id} and b.userName !=#{name}
+    </select>
+
+    <select id="getAllFDY" resultType="map">
+        select a.user_id as id,b.userName as name
+        from user a
+        inner join teacherinfo b on a.user_id = b.userId
+        where a.role_id = 3
+    </select>
+
+</mapper>

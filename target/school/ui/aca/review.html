@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        top: 0;
+    }
+    .review{
+        width: calc(100% - 45px);
+        height: 100%;
+        margin: 0px 20px;
+        top: 0;
+    }
+</style>
+<body>
+<div class="review">
+    <table class="layui-table" lay-filter="demo">
+        <thead>
+        <tr>
+            <th lay-data="{type:'numbers'}">序号</th>
+            <th lay-data="{field:'id'}">id</th>
+            <th lay-data="{field:'userId'}">申请人id</th>
+            <th lay-data="{field:'userName'}">申请人姓名</th>
+            <th lay-data="{field:'time',width:200}">申请时间</th>
+            <th lay-data="{field:'descr',hide:true}">详情</th>
+            <th lay-data="{width:300, align:'center', toolbar: '#barDemo'}">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <div id="page"></div>
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看细节</a>
+        <a class="layui-btn layui-btn-xs" lay-event="agree">同意</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="refuse">拒绝</a>
+    </script>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var review = new Vue({
+        el: ".review",
+        name: "review",
+        data: function () {
+            return {
+                curr_page:1
+            }
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            layInit:function(){
+                var that = this;
+                layui.use(['table','layer','laypage'], function(){
+                    laypage = layui.laypage;
+                    that.initUserList();
+                    table = layui.table;
+                    //监听工具条
+                    table.on('tool(demo)', function(obj){
+                        var data = obj.data;
+                        req_data = data;
+                        if(obj.event === 'detail'){
+                            layer.open({
+                                type: 2,
+                                title:false,
+                                area: ['810px', '500px'],
+                                content: ['printInfo.html', 'no'],
+                                btn:['同意','拒绝'],
+                                yes: function(index, layero){
+                                    $.ajax({
+                                        type: 'POST',
+                                        data:{id:data.id,deal:1},
+                                        url:"../../score/dealWith.do",
+                                        success:function (data) {
+                                            layer.msg(data.data);
+                                            if(data.success){
+                                                that.initUserList(that.curr_page,10);
+                                                layer.close(index);
+                                            }else{
+                                                window.location.href = "loginPage";
+                                            }
+                                        }
+                                    });
+                                },
+                                btn2:function(index,layero){
+                                    $.ajax({
+                                        type: 'POST',
+                                        data:{id:data.id,deal:2},
+                                        url:"../../score/dealWith.do",
+                                        success:function (data) {
+                                            layer.msg(data.data);
+                                            if(data.success){
+                                                that.initUserList(that.curr_page,10);
+                                                layer.close(index);
+                                            }else{
+                                                window.location.href = "loginPage";
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        } else if(obj.event === 'refuse'){
+                            layer.confirm('确认拒绝吗?', function(index){
+                                $.ajax({
+                                    type: 'POST',
+                                    data:{id:data.id,deal:2},
+                                    url:"../../score/dealWith.do",
+                                    success:function (data) {
+                                        layer.msg(data.data);
+                                        if(data.success){
+                                            that.initUserList(that.curr_page,10);
+                                            layer.close(index);
+                                        }else{
+                                            window.location.href = "loginPage";
+                                        }
+                                    }
+                                });
+                            });
+                        } else if(obj.event === 'agree'){
+                            layer.confirm('确认同意吗?', function(index){
+                                $.ajax({
+                                    type: 'POST',
+                                    data:{id:data.id,deal:1},
+                                    url:"../../score/dealWith.do",
+                                    success:function (data) {
+                                        layer.msg(data.data);
+                                        if(data.success){
+                                            that.initUserList(that.curr_page,10);
+                                            layer.close(index);
+                                        }else{
+                                            window.location.href = "loginPage";
+                                        }
+                                    }
+                                });
+                            });
+                        }
+                    });
+                });
+            },
+            initUserList:function(pn,pageSize){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../score/getReview.do",
+                    data:{pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append();
+                                var td2=$("<td></td>").append(item.id);
+                                var td3=$("<td></td>").append(item.userId);
+                                var td4=$("<td></td>").append(item.userName);
+                                var td5=$("<td></td>").append(item.appliTime);
+                                var td6=$("<td></td>").append(item.descr);
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td4).append(td5).append(td6));
+                            });
+                            table.init('demo', {
+                                limit:10
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            that.curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:that.curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=that.curr_page){
+                                            that.initUserList(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+    });
+</script>
+</html>

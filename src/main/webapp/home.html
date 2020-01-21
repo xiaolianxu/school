@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>高校学籍管理系统</title>
+    <link href="icon/iconfont.css" rel="stylesheet" type="text/css">
+    <link href="css/home.css" rel="stylesheet" type="text/css">
+    <script src="icon/iconfont.js"></script>
+</head>
+<body>
+<div id="app">
+    <div class="head">
+        <div class="iconH"></div>
+        <div class="userIcon">
+            <span class="iconfont icon-yonghu"></span>
+            <ul class="userOpt" style="display: none;">
+                <li id="updatePassWD">修改密码</li>
+                <li id="quit">退出</li>
+            </ul>
+        </div>
+    </div>
+    <div class="split"></div>
+    <div class="right" id="right">
+        <div class="menu" id="meIfrme">
+            <iframe id="menu" class="view" src="menu.html"></iframe>
+        </div>
+        <div class="main" id="cdIfrme">
+            <div class="top">
+                <div class="name"></div>
+            </div>
+            <div class="viewContain">
+                <iframe id="view"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/javascript" src="js/outside/jquery.min.js"></script>
+<script type="text/javascript" src="layUi/layui.js"></script>
+<script type="text/javascript" src="js/home.js"></script>
+<script src="js/outside/vue.js"></script>
+<script type="text/javascript">
+    var app = new Vue({
+        el: "#app",
+        name: "app",
+        data: function () {
+            return {
+            }
+        },
+        mounted: function () {
+            this.clickE();
+        },
+        methods: {
+            clickE:function () {
+                layui.use("layer",function() {
+                    $('#quit').on('click', function(){
+                        layer.confirm('确认要退出系统吗？', {
+                            btn: ['确定','取消']
+                        }, function(){
+                            $.ajax({
+                                url: 'user/quit.do',
+                                type: 'POST',
+                                data:{},
+                                success: function (res) {
+                                    if (res.returnCode == 100) {
+                                        sessionStorage.removeItem("role");
+                                        layer.msg("登出系统", {icon: 1, time: 1000});
+                                        window.location.href = "loginPage";
+                                    }
+                                }
+                            });
+                        });
+                    });
+                    $('#updatePassWD').on('click', function(){
+                        layer.open({
+                            type: 2,
+                            title:false,
+                            area: ['410px', '250px'],
+                            content: ['updatePassWD.html', 'no']
+                        });
+                    });
+                })
+            }
+        }
+    });
+</script>
+</html>

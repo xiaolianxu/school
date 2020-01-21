@@ -1,0 +1,58 @@
+{
+  "id": "1467560",
+  "name": "school",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "2113558",
+      "name": "密码锁",
+      "font_class": "mimasuo",
+      "unicode": "e73f",
+      "unicode_decimal": 59199
+    },
+    {
+      "icon_id": "2905126",
+      "name": "用户",
+      "font_class": "yonghu",
+      "unicode": "e633",
+      "unicode_decimal": 58931
+    },
+    {
+      "icon_id": "3481874",
+      "name": "筛选",
+      "font_class": "saixuan",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "3986524",
+      "name": "右箭头",
+      "font_class": "arrfill_u-copy-copy",
+      "unicode": "e647",
+      "unicode_decimal": 58951
+    },
+    {
+      "icon_id": "5063500",
+      "name": "目录",
+      "font_class": "mulu",
+      "unicode": "e66d",
+      "unicode_decimal": 58989
+    },
+    {
+      "icon_id": "6023847",
+      "name": "右箭头",
+      "font_class": "arrfill_l",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "9224933",
+      "name": "用户",
+      "font_class": "yonghu1",
+      "unicode": "e6d1",
+      "unicode_decimal": 59089
+    }
+  ]
+}

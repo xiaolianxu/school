@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+</head>
+<style type="text/css">
+    html,body{
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    #classEnt{
+        height: 100%;
+        width: calc(100% - 50px);
+        margin: 0;
+        padding: 0;
+    }
+    .layui-inline{
+        width: 350px;
+    }
+    .bu{
+        margin-top: 10px;
+    }
+    .zhushi{
+        color: #ff1e29;
+        padding-bottom: 5px;
+    }
+    .cl{
+        text-align: center;
+    }
+</style>
+<body>
+<div id="classEnt">
+    <div class="layui-collapse" lay-accordion style="margin-left: 10px;width: 1190px">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">文件录入方式</h2>
+            <div class="layui-colla-content layui-show">
+                <div class="zhushi">请上传execl文件进行录入，文件字段名有严格要求，请按照如下字段名进行execl操作,中括号内为注释,以下参数均不可少且不能为空，否则上传失败。<br/>
+                    班号，辅导员id，学院，系别，专业，班级号，学生人数，年级
+                </div>
+                <div><input type="file" id="execlUpload"/></div>
+                <div class="bu"><button type="button" class="layui-btn layui-btn-normal  layui-btn-sm" @click="upload()">上传</button></div>
+            </div>
+        </div>
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">手工录入方式</h2>
+            <div class="layui-colla-content">
+                <form class="layui-form" action="">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">班号</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="classId"  placeholder="请输入班号" lay-verify="required|number" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline" style="width: 400px">
+                            <label class="layui-form-label">辅导员id</label>
+                            <div class="layui-input-block">
+                                <select name="userId" lay-search="">
+                                    <option value="-1"></option>
+                                    <template v-for="item in user">
+                                        <option :value="item.id">{{item.id}}-{{item.name}}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">学院</label>
+                            <div class="layui-input-block">
+                                <select name="col" lay-filter="col">
+                                    <template v-for="(item,index) in col">
+                                        <option :value="index">{{item.name}}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">系别</label>
+                            <div class="layui-input-block">
+                                <select name="dep" lay-filter="dep">
+                                    <template v-for="(item,index) in dep">
+                                        <option :value="index">{{item.name}}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">专业</label>
+                            <div class="layui-input-block">
+                                <select name="pro">
+                                    <template v-for="item in pro">
+                                        <option :value="item">{{item}}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">班级号</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="classNumber" placeholder="请输入班级号" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">学生人数</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="studentNumber" placeholder="请输入学生人数" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">年级</label>
+                            <div class="layui-input-block">
+                                <select name="grade">
+                                    <template v-for="item in year">
+                                        <option :value="item">{{item}}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block cl">
+                            <button type="submit" class="layui-btn layui-btn-normal" lay-submit="" lay-filter="demo">立即提交</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var classEnt = new Vue({
+        el: "#classEnt",
+        name: "classEnt",
+        data: function () {
+            return {
+                col:[],
+                dep:[],
+                pro:[],
+                year:[],
+                user:[]
+            }
+        },
+        beforeMount:function(){
+            this.getList();
+        },
+        mounted:function(){
+            this.init();
+        },
+        updated:function() {
+            this.$nextTick(function () {
+                layui.use(['form'], function(){
+                    layui.form.render('select')
+                });
+            });
+        },
+        methods: {
+            getList: function () {
+                var That = this;
+                $.post('../../student/getList.do',{},function(da) {
+                    if(da.college.length>0){
+                        That.col = da.college;
+                        That.dep = That.col[0].department;
+                        That.pro = That.dep[0].profession;
+                        var y = new Date().getFullYear();
+                        for(var i= y;i>1910;i--){
+                            That.year.push(i);
+                        }
+                    }
+                });
+                $.post('../../user/getAllFDY.do',{},function (da) {
+                    That.user = da;
+                });
+            },
+            init:function(){
+                var that = this;
+                layui.use(['element', 'layer','form'], function() {
+                    element = layui.element;
+                    layer = layui.layer;
+                    form = layui.form;
+                    form.on('select(col)',function(data) {
+                        that.index= data.value;
+                        that.dep = that.col[data.value].department;
+                        that.pro = that.dep[0].profession;
+                    });
+                    form.on('select(dep)',function(data) {
+                        that.pro = that.col[that.index].department[data.value].profession;
+                    });
+                    form.on('submit(demo)', function(data){
+                        var params = data.field;
+                        if(params.userId==-1){
+                            layer.msg("请填写辅导员id!")
+                        }else{
+                            var index = parseInt(data.field.col);
+                            params.col = that.col[index].name;
+                            var index1 = parseInt(data.field.dep);
+                            params.dep = that.col[index].department[index1]["name"];
+                            $.ajax({
+                                type: "POST",
+                                url: "../../user/upLoadClass1.do",
+                                data:JSON.stringify(params),
+                                contentType: 'application/json',
+                                success: function(data) {
+                                    if(data.returnCode==100){
+                                        layer.msg("操作成功！");
+                                    }else{
+                                        layer.msg(data.returnMsg);
+                                    }
+                                }
+                            });
+                        }
+                        return false;
+                    });
+                });
+            },
+            upload:function() {
+                var that = this;
+                var formData = new FormData();
+                formData.append('file', $('#execlUpload')[0].files[0]);
+                layer.msg('文件上传中', {
+                    icon: 16
+                    ,shade: 0.01
+                });
+                $.ajax({
+                    type: "POST",
+                    url: "../../user/upLoadClass.do",
+                    data:formData,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    encType:"multipart/form-data",
+                    success: function(data) {
+                        layer.closeAll('loading');
+                        if(data.returnCode==100){
+                            layer.msg("上传成功！");
+                        }else{
+                            layer.msg(data.returnMsg);
+                        }
+                    }
+                });
+            }
+        }
+    });
+</script>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/all.css">
+</head>
+
+<style type="text/css">
+    #resultInq{
+        height: 100%;
+        width: calc(100% - 50px);
+        margin: 0;
+        padding: 0;
+    }
+    .xz > select{
+        width: 70px;
+    }
+    td{
+        border: 1px solid #e6e6e6;
+        padding: 7px;
+    }
+    .s{
+        height: 25px;
+        line-height: 25px;
+        color: #4d8ade;
+        padding-right: 5px;
+    }
+</style>
+<body>
+<div id="resultInq">
+    <div class="search">
+        <div class="xn">学年:
+            <select id="xn" @change="change()">
+                <template v-for="item in schoolYear">
+                    <option :value="item" >{{item}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="xq">学期:
+            <select id="xq" @change="change()">
+                <template>
+                    <option :value="1" >1</option>
+                    <option :value="2" >2</option>
+                </template>
+            </select>
+        </div>
+        <div class="cn">课程名称:
+            <select id="cn" @change="changeE()">
+                <option :value="-1" v-if="course.length==0">无</option>
+                <template v-for="(item,index) in course">
+                    <option :value="index">{{item.course_name}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="sk">上课时间：
+            <select id="sk">
+                <option :value="-1">全部</option>
+                <template v-for="item in time">
+                    <option :value="item.id">{{item.time}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="button inq">查询</div>
+    </div>
+    <div class="search">
+        <div class="choose">
+            <select id="type">
+                <option value="sId">学生id</option>
+                <option value="name">学生姓名</option>
+            </select>
+            <input type="text" value="" id="spiVal">
+        </div>
+        <div class="button inq1">准确查询</div>
+        <span class="s">（此课程内查询）</span>
+    </div>
+    <div class="demoContain">
+        <table class="layui-table" lay-filter="demo">
+            <thead>
+            <tr>
+                <th lay-data="{field:'code'}">课程代码</th>
+                <th lay-data="{field:'name'}">课程名称</th>
+                <th lay-data="{field:'nature'}">课程性质</th>
+                <th lay-data="{field:'credit'}">学分</th>
+                <th lay-data="{field:'data', sort:true}">上课时间</th>
+                <th lay-data="{field:'id'}">学生id</th>
+                <th lay-data="{field:'tName'}">姓名</th>
+                <th lay-data="{field:'score', sort:true}">成绩</th>
+                <th lay-data="{field:'retest'}">补考成绩</th>
+                <th lay-data="{field:'rebuild'}">是否重修</th>
+                <th lay-data="{field:'college'}">开课学院</th>
+                <th lay-data="{field:'remarks'}">备注</th>
+                <th lay-data="{field:'rRemarks'}">补考备注</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div id="page"></div>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var resultInq = new Vue({
+        el: "#resultInq",
+        name: "resultInq",
+        data: function () {
+            return {
+                schoolYear:[],
+                courseList:[],
+                course:[],
+                time:[]
+            }
+        },
+        beforeMount:function(){
+            this.getList();
+        },
+        mounted: function () {
+           this.layInit();
+        },
+        methods: {
+            getList: function () {
+                var that = this;
+                var temp = [];
+                $.ajax({
+                    type: 'POST',
+                    url: "../../course/getCourseListR.do",
+                    data: {},
+                    success: function (result) {
+                        for (var i = 0; i < result.length; i++) {
+                            var v = result[i];
+                            var index = temp.indexOf(v.course_code);
+                            var t = {time: v.data, id: v.id};
+                            if (index != -1) {
+                                that.courseList[index].chi.push(t);
+                            } else {
+                                delete v.id;
+                                delete v.data;
+                                v.chi = [t];
+                                that.courseList.push(v);
+                                temp.push(v.course_code);
+                            }
+                        }
+                    }
+                });
+                var y = new Date().getFullYear();
+                for (var i = y; i > 1910; i--) {
+                    this.schoolYear.push((i - 1) + "-" + i);
+                }
+                var length = that.courseList.length;
+                var year = that.schoolYear[0];
+                for (var i = 0; i < length; i++) {
+                    var v = that.courseList[i];
+                    if (v.school_year == year && v.semester == 1) {
+                        that.course.push(v);
+                    }
+                }
+                if (this.course.length > 0) {
+                    this.time = this.course[0].chi;
+                }
+            },
+            change: function () {
+                var year = $("#xn").val();
+                var semester = $("#xq").val();
+                this.course = [];
+                var length = this.courseList.length;
+                for (var i = 0; i < length; i++) {
+                    var v = this.courseList[i];
+                    if (v.school_year == year && v.semester == semester) {
+                        this.course.push(v);
+                    }
+                }
+                if (this.course.length > 0) {
+                    this.time = this.course[0].chi;
+                }
+            },
+            changeE: function () {
+                var da = $("#cn").val();
+                this.time = [];
+                if (da != -1) {
+                    this.time = this.course[da].chi;
+                } else {
+                    $("#sk").val(-1);
+                }
+            },
+            layInit: function () {
+                var that = this;
+                layui.use(['table', 'layer', 'laypage'], function () {
+                    laypage = layui.laypage;
+                    //搜索框点击事件
+                    that.initUserList();
+                    $('.inq').on('click', function () {
+                        var cn = $("#cn").val();
+                        if (cn == -1) {
+                            layer.msg("请选择具体课程！");
+                        } else {
+                            that.initUserList();
+                        }
+                        return false;
+                    });
+                    $('.inq1').on('click', function () {
+                        var cn = $("#cn").val();
+                        if (cn == -1) {
+                            layer.msg("请选择具体课程！");
+                        } else {
+                            if($("#spiVal").val()==null || $("#spiVal").val()==""){
+                                layer.msg("请输入内容！");
+                            }else{
+                                that.initUserList1();
+                            }
+                        }
+                        return false;
+                    });
+                });
+
+            },
+            initUserList: function (pn, pageSize) {
+                var table = layui.table;
+                var that = this;
+                var cn = $("#cn").val();
+                if (cn != -1) {
+                    $.ajax({
+                        type: 'POST',
+                        url: "../../teacher/getStudentScore.do",
+                        data: {courseCode: that.course[cn].course_code, id: $("#sk").val(), pn: pn, pageSize: pageSize},
+                        success: function (result) {
+                            if (result.returnCode == 100) {
+                                $(".layui-table tbody").empty();
+                                $.each(result.returnData.list, function (index, item) {
+                                    var td3 = $("<td></td>").append(item.course_code);
+                                    var td4 = $("<td></td>").append(item.course_name);
+                                    var td5 = $("<td></td>").append(item.course_nature);
+                                    var td6 = $("<td></td>").append(item.credit);
+                                    var td1 = $("<td></td>").append(item.data);
+                                    var td13 = $("<td></td>").append(item.user_id);
+                                    var td14 = $("<td></td>").append(item.user_name);
+                                    var td7 = $("<td></td>").append(item.score);
+                                    var td8 = $("<td></td>").append(item.retest ? item.retest : '');
+                                    var td9 = $("<td></td>").append(item.rebuild ? item.rebuild : '');
+                                    var td10 = $("<td></td>").append(item.college);
+                                    var td11 = $("<td></td>").append(item.remarks ? item.remarks : '');
+                                    var td12 = $("<td></td>").append(item.rRemarks ? item.rRemarks : '');
+                                    $(".layui-table tbody").append($("<tr></tr>").append(td3).append(td4).append(td5).append(td6).append(td1).append(td13).append(td14).append(td7).append(td8).append(td9).append(td10).append(td11).append(td12));
+                                });
+                                table.init('demo', {
+                                    height: 315
+                                    , limit: 10
+                                });
+                                var pages = result.returnData.pages;//总页数
+                                var curr_page = result.returnData.pageNum;//当前页
+                                var counts = result.returnData.total;//总记录数
+                                laypage.render({
+                                    elem: 'page'
+                                    , count: counts //数据总数，从服务端得到
+                                    , pages: pages
+                                    , first: 1
+                                    , last: pages
+                                    , curr: curr_page
+                                    , layout: ['prev', 'page', 'next', 'skip', 'count']
+                                    , jump: function (obj, first) {
+                                        //obj包含了当前分页的所有参数，比如：
+                                        //首次不执行
+                                        if (!first) {
+                                            //do something
+                                            var toPage = obj.curr;
+                                            if (toPage != curr_page) {
+                                                that.initUserList(toPage);
+                                            }
+                                        }
+                                    }
+                                });
+                                layer.msg("查询成功！")
+                            }
+                        }
+                    });
+                } else {
+                    laypage.render({
+                        elem: 'page'
+                        , count: 0
+                        , pages: 0
+                        , first: 1
+                        , last: 0
+                        , curr: 1
+                        , layout: ['prev', 'page', 'next', 'skip', 'count']
+                        , jump: function (obj, first) {
+                            //obj包含了当前分页的所有参数，比如：
+                            //首次不执行
+                            if (!first) {
+                                //do something
+                                var toPage = obj.curr;
+                                if (toPage != curr_page) {
+                                    that.initUserList(toPage);
+                                }
+                            }
+                        }
+                    });
+                }
+            },
+            initUserList1: function (pn, pageSize) {
+                var table = layui.table;
+                var that = this;
+                var cn = $("#cn").val();
+                $.ajax({
+                    type: 'POST',
+                    url: "../../teacher/getStudentScoreT.do",
+                    data: {
+                        courseCode: that.course[cn].course_code,
+                        id: $("#sk").val(),
+                        type: $("#type").val(),
+                        spiVal: $("#spiVal").val(),
+                        pn: pn,
+                        pageSize: pageSize
+                    },
+                    success: function (result) {
+                        if (result.returnCode == 100) {
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list, function (index, item) {
+                                console.log(item)
+                                var td3 = $("<td></td>").append(item.course_code);
+                                var td4 = $("<td></td>").append(item.course_name);
+                                var td5 = $("<td></td>").append(item.course_nature);
+                                var td6 = $("<td></td>").append(item.credit);
+                                var td1 = $("<td></td>").append(item.data);
+                                var td13 = $("<td></td>").append(item.user_id);
+                                var td14 = $("<td></td>").append(item.user_name);
+                                var td7 = $("<td></td>").append(item.score);
+                                var td8 = $("<td></td>").append(item.retest ? item.retest : '');
+                                var td9 = $("<td></td>").append(item.rebuild ? item.rebuild : '');
+                                var td10 = $("<td></td>").append(item.college);
+                                var td11 = $("<td></td>").append(item.remarks ? item.remarks : '');
+                                var td12 = $("<td></td>").append(item.rRemarks ? item.rRemarks : '');
+                                $(".layui-table tbody").append($("<tr></tr>").append(td3).append(td4).append(td5).append(td6).append(td1).append(td13).append(td14).append(td7).append(td8).append(td9).append(td10).append(td11).append(td12));
+                            });
+                            table.init('demo', {
+                                height: 315
+                                , limit: 10
+                            });
+                            var pages = result.returnData.pages;//总页数
+                            var curr_page = result.returnData.pageNum;//当前页
+                            var counts = result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                , count: counts //数据总数，从服务端得到
+                                , pages: pages
+                                , first: 1
+                                , last: pages
+                                , curr: curr_page
+                                , layout: ['prev', 'page', 'next', 'skip', 'count']
+                                , jump: function (obj, first) {
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if (!first) {
+                                        //do something
+                                        var toPage = obj.curr;
+                                        if (toPage != curr_page) {
+                                            that.initUserList1(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                            layer.msg("查询成功！")
+                        }
+                    }
+                });
+            }
+        }
+    });
+</script>
+</html>

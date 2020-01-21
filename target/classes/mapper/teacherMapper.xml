@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 设置为IUserDao接口方法提供sql语句配置 -->
+<mapper namespace="com.school.dao.teacherDao">
+
+    <select id="getTeacherInfo" resultType="map" parameterType="int">
+        select *
+        from teacherinfo
+        where userId = #{id}
+    </select>
+
+    <update id="updateImg" parameterType="java.util.HashMap">
+        update user_image
+        set image_name=#{name}
+        where user_id = #{id}
+    </update>
+
+    <select id="getImage" resultType="string" parameterType="int">
+        select image_name as name
+        from user_image
+        where user_id = #{id}
+    </select>
+
+    <update id="updateInfo" parameterType="java.util.HashMap">
+        update teacherinfo
+        set homePhone = #{homePhone} ,phone = #{phone} ,location = #{location}
+        where userId = #{id}
+    </update>
+
+    <select id="getStudentScore" resultType="map" parameterType="java.util.HashMap">
+        select a.*,c.data,d.course_code,d.course_name,d.course_nature,d.credit,d.college,e.userName as user_name
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        inner join studentinfo e on a.user_id = e.userId
+        where c.course_code= #{code}
+        <if test="id!=-1">
+            and a.course_id=#{id}
+        </if>
+        order by a.user_id
+    </select>
+
+    <select id="getSSAna" resultType="map" parameterType="java.util.HashMap">
+        select sum(case when a.score between 95 and 100 then 1 else 0 end) as A,
+        sum(case when a.score between 85 and 94 then 1 else 0 end) as B,
+        sum(case when a.score between 75 and 84 then 1 else 0 end) as C,
+        sum(case when a.score between 60 and 74 then 1 else 0 end) as D,
+        sum(case when a.score &lt; 60 then 1 else 0 end) as E
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        where b.course_code=#{code}
+        <if test="id!=-1">
+            and a.course_id=#{id}
+        </if>
+        order by a.score
+    </select>
+
+    <select id="getSSAna1" resultType="map" parameterType="java.util.HashMap">
+        select a.score as name,count(*) as value
+        from score a
+        inner join courseinfo b on a.course_id = b.id
+        where b.course_code=#{code}
+        <if test="id!=-1">
+            and a.course_id=#{id}
+        </if>
+        GROUP BY a.score
+    </select>
+
+    <select id="getStudentScoreT" resultType="map" parameterType="java.util.HashMap">
+        select a.*,c.data,d.course_code,d.course_name,d.course_nature,d.credit,d.college,e.username as user_name
+        from score a
+        inner join courseinfo c on a.course_id = c.id
+        inner join course d on c.course_code = d.course_code
+        inner join studentinfo e on a.user_id = e.userId
+        where c.course_code=#{code}
+        <if test="id!=-1">
+            and a.course_id=#{id}
+        </if>
+        <if test="type=='name'">
+            and e.username
+        </if>
+        <if test="type=='sId'">
+            and a.user_id
+        </if>
+        LIKE '%${spiVal}%'
+        order by a.user_id
+    </select>
+</mapper>

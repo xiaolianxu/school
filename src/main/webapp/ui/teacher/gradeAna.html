@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/all.css">
+</head>
+
+<style type="text/css">
+    #gradeAna{
+        height: 100%;
+        width: calc(100% - 50px);
+        margin: 0;
+        padding: 0;
+    }
+    .xz > select{
+        width: 70px;
+    }
+    .chartsContain{
+        width: 100%;
+        height: calc(100% - 50px);
+        padding-top: 20px;
+        overflow: hidden;
+    }
+    #charts{
+        height: 100%;
+        width: calc(100% + 20px);
+        overflow-y: scroll;
+    }
+    .chart{
+        float: left;
+        width: 560px;
+        height: 330px;
+    }
+    .descr{
+        height: 330px;
+        line-height: 330px;
+        text-align: center;
+    }
+</style>
+<body>
+<div id="gradeAna">
+    <div class="search">
+        <div class="xn">学年:
+            <select id="xn" @change="change()">
+                <template v-for="item in schoolYear">
+                    <option :value="item" >{{item}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="xq">学期:
+            <select id="xq" @change="change()">
+                <template>
+                    <option :value="1" >1</option>
+                    <option :value="2" >2</option>
+                </template>
+            </select>
+        </div>
+        <div class="cn">课程名称:
+            <select id="cn">
+                <option :value="-1" v-if="course.length==0">无</option>
+                <template v-for="(item,index) in course">
+                    <option :value="index">{{item.course_name}}</option>
+                </template>
+            </select>
+        </div>
+        <div class="button inq">查询</div>
+    </div>
+    <div class="chartsContain">
+        <div id="charts">
+        </div>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script src="../../js/outside/echarts.min.js"></script>
+<script type="text/javascript">
+    var gradeAna = new Vue({
+        el: "#gradeAna",
+        name: "gradeAna",
+        data: function () {
+            return {
+                schoolYear:[],
+                courseList:[],
+                course:[]
+            }
+        },
+        beforeMount:function(){
+            this.getList();
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            getList: function () {
+                var that = this;
+                var temp = [];
+                $.ajax({
+                    type: 'POST',
+                    url: "../../course/getCourseListR.do",
+                    data: {},
+                    success: function (result) {
+                        for (var i = 0; i < result.length; i++) {
+                            var v = result[i];
+                            var index = temp.indexOf(v.course_code);
+                            var t = {time: v.data, id: v.id};
+                            if (index != -1) {
+                                that.courseList[index].chi.push(t);
+                            } else {
+                                delete v.id;
+                                delete v.data;
+                                v.chi = [t];
+                                that.courseList.push(v);
+                                temp.push(v.course_code);
+                            }
+                        }
+                    }
+                });
+                var y = new Date().getFullYear();
+                for (var i = y; i > 1910; i--) {
+                    this.schoolYear.push((i - 1) + "-" + i);
+                }
+                var length = that.courseList.length;
+                var year = that.schoolYear[0];
+                for (var i = 0; i < length; i++) {
+                    var v = that.courseList[i];
+                    if (v.school_year == year && v.semester == 1) {
+                        that.course.push(v);
+                    }
+                }
+                if (this.course.length > 0) {
+                    this.time = this.course[0].chi;
+                }
+            },
+            change: function () {
+                var year = $("#xn").val();
+                var semester = $("#xq").val();
+                this.course = [];
+                var length = this.courseList.length;
+                for (var i = 0; i < length; i++) {
+                    var v = this.courseList[i];
+                    if (v.school_year == year && v.semester == semester) {
+                        this.course.push(v);
+                    }
+                }
+            },
+            layInit: function () {
+                var that = this;
+                layui.use(['table', 'layer'], function () {
+                    //搜索框点击事件
+                    that.initUserList();
+                    $('.inq').on('click', function () {
+                        that.initUserList();
+                        return false;
+                    });
+                });
+
+            },
+            initUserList: function () {
+                var that = this;
+                var cn = $("#cn").val();
+                if (cn != -1) {
+                    var time = this.course[cn].chi;
+                    var charts = document.getElementById("charts");
+                    charts.innerHTML = "";
+                    if(time.length>1) {
+                        var a = {id: -1, time: "本门课全部学生"};
+                        time.unshift(a);
+                    }else{
+                        time[0].time = "本门课全部学生";
+                    }
+                    for(var i=0;i<time.length;i++) {
+                        (function (i) {
+                            var div = document.createElement("div");
+                            div.className = "chart";
+                            charts.appendChild(div);
+                            var params = {
+                                courseCode: that.course[cn].course_code,
+                                type: that.course[cn].type,
+                                id: time[i].id
+                            };
+                            $.ajax({
+                                type: 'POST',
+                                url: "../../teacher/getSSAna.do",
+                                data: params,
+                                success: function (result) {
+                                    if(JSON.stringify(result) != "{}"){
+                                        var myChart = echarts.init(div);
+                                        var xData = result.level;
+                                        var data = result.people;
+                                        var options = {
+                                            title: {
+                                                text: '学生成绩比例',
+                                                subtext: time[i].time,
+                                                x: 'center'
+                                            },
+                                            tooltip: {
+                                                trigger: 'item',
+                                                formatter: "{a} <br/>{b} : {c}人 ({d}%)"
+                                            },
+                                            legend: {
+                                                orient: 'vertical',
+                                                bottom: '30px',
+                                                right: '80px',
+                                                data: xData
+                                            },
+                                            series: [
+                                                {
+                                                    name: '成绩等级',
+                                                    type: 'pie',
+                                                    radius: '55%',
+                                                    center: ['50%', '50%'],
+                                                    data: data,
+                                                    itemStyle: {
+                                                        emphasis: {
+                                                            shadowBlur: 10,
+                                                            shadowOffsetX: 0,
+                                                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        };
+                                        myChart.setOption(options);
+                                    }else{
+                                        var div1 = document.createElement("div");
+                                        div1.className="descr";
+                                        div1.innerHTML = time[i].time + "数据为空";
+                                        div.appendChild(div1);
+                                    }
+                                }
+                            });
+                        })(i);
+                    }
+                    layer.msg("查询成功！")
+                }else{
+                    layer.msg("请选择具体课程！")
+                }
+            }
+        }
+    });
+</script>
+</html>

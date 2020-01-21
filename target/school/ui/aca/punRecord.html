@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../layUi/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/all.css">
+</head>
+
+<style type="text/css">
+    #punRecord{
+        height: 100%;
+        width: calc(100% - 50px);
+        margin: 0;
+        padding: 0;
+    }
+    .s{
+        height: 25px;
+        line-height: 25px;
+        color: #4d8ade;
+        padding-right: 5px;
+    }
+</style>
+<body>
+<div id="punRecord">
+    <div class="search">
+        <div class="xy">惩罚状态:
+            <select id="xy">
+                <option value="0">正常</option>
+                <option value="1">已核销</option>
+            </select>
+        </div>
+        <div class="button inq">查询</div>
+    </div>
+    <div class="search">
+        <div class="choose">
+            <select id="type">
+                <option value="id">学生学号</option>
+                <option value="name">学生姓名</option>
+            </select>
+            <input type="text" value="" id="spiVal">
+        </div>
+        <div class="button inq1">准确查询</div>
+        <span class="s">（此状态内查询）</span>
+    </div>
+    <div class="demoContain">
+        <table class="layui-table">
+            <thead>
+            <tr>
+                <th>id</th>
+                <th>学号</th>
+                <th>姓名</th>
+                <th>级别</th>
+                <th>原因</th>
+                <th>处理人id</th>
+                <th>处理人姓名</th>
+                <th>处理时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div id="page"></div>
+    </div>
+</div>
+</body>
+<script src="../../js/outside/vue.js"></script>
+<script src="../../js/outside/jquery.min.js"></script>
+<script src="../../layUi/layui.js"></script>
+<script type="text/javascript">
+    var punRecord = new Vue({
+        el: "#punRecord",
+        name: "punRecord",
+        data: function () {
+            return {
+                flag:0
+            }
+        },
+        mounted: function () {
+            this.layInit();
+        },
+        methods: {
+            layInit:function(){
+                var that = this;
+                layui.use(['layer','laypage','table'], function(){
+                    table = layui.table;
+                    laypage = layui.laypage;
+                    $(document).on('click','.vi',function () {
+                        var id=$(this).attr("id");
+                        var status = $(this).attr("status");
+                        if(status==1){
+                            $.ajax({
+                                method: 'POST',
+                                url:"../../student/getRecord.do",
+                                data:{id:id},
+                                success:function (data) {
+                                    var con = '<div style="padding: 50px; line-height: 30px; background-color: #393D49; color: #fff; font-weight: 300;">' +
+                                        '学生id：' + data.userId + '<br/>' +'学生姓名：' + data.userName + '<br>' +
+                                        '级别：'+ data.level + '<br/>' +'原因：'+ data.descr + '<br/>'+
+                                        '处理人id：'+ data.reviewId + '<br/>' + '处理人姓名：' +  data. reviewName + '<br/>' +
+                                        '发生时间：' + data.time + '<br/>' + '核销原因：'+ data.reason + '<br/>'+
+                                        '核销人id：' + data.dId + '<br/>' + '核销人姓名：' + data.dName +'<br/>'+
+                                        '核销时间：'+ data.dTime + '</div>';
+                                    layer.open({
+                                        type: 1,
+                                        title: false,
+                                        closeBtn: false,
+                                        area: '400px',
+                                        shade: 0.8,
+                                        id: 'LAY_layuipro',
+                                        resize: false,
+                                        btn: ['确定'],
+                                        btnAlign: 'c',
+                                        moveType: 1, //拖拽模式，0或者1
+                                        content: con
+                                    });
+                                }
+                            });
+                        }else{
+                            layer.prompt({
+                                formType: 2,
+                                title: '请输入核销原因',
+                                value: '',
+                                maxlength: 140
+                            }, function(value, index){
+                                layer.confirm('确定无误核销吗？', {
+                                    btn: ['确定','取消'] //按钮
+                                }, function(){
+                                    $.ajax({
+                                        type: 'POST',
+                                        url:"../../student/writeOff.do",
+                                        data:{reason:value,id:id},
+                                        success:function () {
+                                            if(that.flag==0){
+                                                that.initUserList();
+                                            }else{
+                                                that.initUserList1();
+                                            }
+                                            layer.msg('核销成功！');
+                                            layer.close(index);
+                                        }
+                                    })
+
+                                }, function(){
+                                    layer.msg('已取消！');
+                                    layer.close(index);
+                                });
+                            });
+                        }
+                    });
+                    //搜索框点击事件
+                    $('.inq').on('click', function(){
+                        that.flag = 0;
+                        that.initUserList();
+                        layer.msg("查询成功！");
+                        return false;
+                    });
+                    $('.inq1').on('click', function(){
+                        that.flag = 1;
+                        that.initUserList1();
+                        layer.msg("查询成功！");
+                        return false;
+                    });
+                    //初始化表格数据
+                    that.initUserList();
+                });
+            },
+            initUserList:function(pn,pageSize){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../student/punRecord.do",
+                    data:{status:$("#xy").val(),pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            var str = "核销";
+                            if($("#xy").val()==1){
+                                str = "查看详情";
+                            }
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append(item.id);
+                                var td2=$("<td></td>").append(item.userId);
+                                var td3=$("<td></td>").append(item.userName);
+                                var td4=$("<td></td>").append(item.level);
+                                var td5=$("<td></td>").append(item.descr);
+                                var td6=$("<td></td>").append(item.reviewId);
+                                var td7=$("<td></td>").append(item.reviewName);
+                                var td8=$("<td></td>").append(item.time);
+                                var td9=$("<td></td>").addClass("td-manage");
+                                td9.append($("<button></button>").addClass("layui-btn  layui-btn-sm layui-btn-normal vi").attr({"id":item.id,"status":item.status}).append(str));
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td4).append(td5).append(td6).append(td7).append(td8).append(td9));
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            var curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=curr_page){
+                                            that.initUserList(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            },
+            initUserList1:function(pn,pageSize){
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url:"../../student/punRecordSp.do",
+                    data:{status:$("#xy").val(),type:$("#type").val(),spiVal:$("#spiVal").val(),pn:pn,pageSize:pageSize},
+                    success:function(result){
+                        if(result.returnCode == 100){
+                            var str = "核销";
+                            if($("#xy").val()==1){
+                                str = "查看详情";
+                            }
+                            $(".layui-table tbody").empty();
+                            $.each(result.returnData.list,function (index,item) {
+                                var td1=$("<td></td>").append(item.id);
+                                var td2=$("<td></td>").append(item.userId);
+                                var td3=$("<td></td>").append(item.userName);
+                                var td4=$("<td></td>").append(item.level);
+                                var td5=$("<td></td>").append(item.descr);
+                                var td6=$("<td></td>").append(item.reviewId);
+                                var td7=$("<td></td>").append(item.reviewName);
+                                var td8=$("<td></td>").append(item.time);
+                                var td9=$("<td></td>").addClass("td-manage");
+                                td9.append($("<button></button>").addClass("layui-btn  layui-btn-sm layui-btn-normal vi").attr({"id":item.id,"status":item.status}).append(str));
+                                $(".layui-table tbody").append($("<tr></tr>").append(td1).append(td2).append(td3).append(td4).append(td5).append(td6).append(td7).append(td8).append(td9));
+                            });
+                            var pages=result.returnData.pages;//总页数
+                            var curr_page=result.returnData.pageNum;//当前页
+                            var counts=result.returnData.total;//总记录数
+                            laypage.render({
+                                elem: 'page'
+                                ,count: counts //数据总数，从服务端得到
+                                ,pages: pages
+                                ,first: 1
+                                ,last:  pages
+                                ,curr:curr_page
+                                ,layout: ['prev','page','next','skip','count']
+                                ,jump: function(obj, first){
+                                    //obj包含了当前分页的所有参数，比如：
+                                    //首次不执行
+                                    if(!first){
+                                        //do something
+                                        var toPage=obj.curr;
+                                        if(toPage!=curr_page){
+                                            that.initUserList1(toPage);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+    });
+</script>
+</html>
